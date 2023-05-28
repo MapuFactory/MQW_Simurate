@@ -73,6 +73,7 @@ classdef Constant
         AAA
         RTD
         ALL
+        dx
     end
     
     methods
@@ -150,6 +151,7 @@ classdef Constant
             obj.AAA = 0;
             obj.RTD = 2;
             obj.ALL = 1;
+            obj.dx=obj.ML/obj.DX;	%/* DXは分割数	MLはこのプログラムのz軸の基本単位。そのMLをさらにDX分割する。*/
         end
     end
 end

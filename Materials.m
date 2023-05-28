@@ -14,6 +14,8 @@ classdef Materials < handle
 		Work;
 		divnum;
 		NX;
+		smt;
+        d;
 	end
 
 	methods
@@ -37,6 +39,8 @@ classdef Materials < handle
 				obj.Work = -obj.Ef - obj.bar + obj.base;
 				obj.divnum = 0;
 				obj.NX = 0;
+				obj.smt = 0;
+                obj.d = 0;
 			else
 				if strcmp(materialName, 'Al')
 					obj.name = 'Al';
@@ -52,6 +56,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 0;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'n-Si.Sub.')
 					obj.name = 'n-Si.Sub.';
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -66,6 +72,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 1;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'n-Si')
 					obj.name="n-Si";
 					obj.die = const.DIE_iSI  *const. DIEELECSTAR;
@@ -80,6 +88,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 2;
+                    obj.d = ML*const.ML;
 				% elseif materialName, 'p-Si.Sub.'
 				% 	obj.name="p-Si.Sub.";
 				% 	obj.die=DIE_iSI  * DIEELECSTAR;
@@ -88,6 +98,8 @@ classdef Materials < handle
 				% 	obj.massxy=MASS_iSI;
 				% 	obj.valley=NUMVALLY_SI;
 				% 	obj.cond=2;
+				%	obj.smt = 3;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'p-Si')
 					obj.name = "p-Si";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -103,6 +115,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 4;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'CaF2')
 					obj.name = "CaF2";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -117,6 +131,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 5;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'CdF2')
 					obj.name = "CdF2";
 					obj.die = const.DIE_CDF2 * const.DIEELECSTAR;
@@ -131,6 +147,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 6;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'i-Si')
 					obj.name = "i-Si";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -145,6 +163,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 7;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'Au')
 					obj.name = "Au";
 					obj.die = const.DIE_AU   * const.DIEELECSTAR;
@@ -159,6 +179,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 8;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'nSub.CaF2')
 					obj.name = "nSub.CaF2";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -173,6 +195,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 9;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'p-Si.Sub.')
 					obj.name = "p-Si.Sub.";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -188,6 +212,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 10;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'pCaF2')
 					obj.name = "pCaF2";
 					obj.die = const.DIE_pCAF2* const.DIEELECSTAR;
@@ -202,6 +228,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 11;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'pAl')
 					obj.name = "pAl";
 					obj.die = const.DIE_pAL  * const.DIEELECSTAR;
@@ -216,6 +244,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 12;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, '5MLCaF2')
 					obj.name = "5MLCaF2";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -230,6 +260,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 13;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, '仮想AL')
 					obj.name = "仮想AL";
 					obj.die = const.DIE_AL   * const.DIEELECSTAR;
@@ -244,6 +276,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 14;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, '仮想CaF2')
 					obj.name = "仮想CaF2";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -258,6 +292,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 15;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, '仮想p-Si')
 					obj.name = "仮想p-Si";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -272,6 +308,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 16;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'SiO2')
 					obj.name = "SiO2";
 					obj.die = const.DIE_SIO2 * const.DIEELECSTAR;
@@ -286,6 +324,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 17;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'nc-Si')
 					obj.name = "nc-Si.";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -300,6 +340,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 18;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'nSi100Z')
 					obj.name = "nSi100Z";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -314,6 +356,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 19;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'nSi100XY')
 					obj.name = "nSi100XY";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -328,6 +372,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 20;
+                    obj.d = ML*const.ML;
 				% elseif strcmp(materialName, 'n-Si.Sub.')
 				% 	obj.name="n-Si.Sub.";
 				% 	obj.die=DIE_iSI  * DIEELECSTAR;
@@ -336,6 +382,8 @@ classdef Materials < handle
 				% 	obj.massxy=MASS_AL;
 				% 	obj.valley=NUMVALLY_SI;
 				% 	obj.cond=0;
+				%	obj.smt = 21;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'CaF2(4ML)')
 					obj.name = "CaF2(4ML)";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -350,6 +398,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 22;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'p-i-Si')
 					obj.name = "p-i-Si";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -365,6 +415,8 @@ classdef Materials < handle
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 23;
+                    obj.d = ML*const.ML;
 				elseif strcmp(materialName, '3MLCaF2')
 					obj.name = "3MLCaF2";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
@@ -379,6 +431,8 @@ classdef Materials < handle
 					obj.Work = 0;
 					obj.divnum = ML*const.DX;
 					obj.NX = NX;
+					obj.smt = 24;
+                    obj.d = ML*const.ML;
 				end
 			end
 		end
