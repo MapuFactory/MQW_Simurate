@@ -1,95 +1,95 @@
-SETFILE "set.dat"
+SETFILE = "set.dat"
 
-PI          3.1415926      %/* PI                              */
-PIS         9.8696044      %/* PI^2                            */
-ML          0.31e-9        %/* [m]   [ML]→[m]                 */
-MSTAR       9.109e-31      %/* [kg]                            */
-ELEC        1.602e-19      %/* [C]   Electron charge           */
-DIEELECSTAR 8.854e-12      %/* [F/m] Vacum Dielectric Constant */
-HBAR        1.054e-34      %/* [Js]                            */
-HH	6.626e-34              %/*[Js]								*/
-KB          1.38e-23       %/* [J/K]                           */
-TEMP        3.0e+2         %/* [K]                             */
-KT          (KB*TEMP)
+PI = 3.1415926      %/* PI                              */
+PIS = 9.8696044      %/* PI^2                            */
+ML = 0.31e-9        %/* [m]   [ML]→[m]                 */
+MSTAR = 9.109e-31      %/* [kg]                            */
+ELEC = 1.602e-19      %/* [C]   Electron charge           */
+DIEELECSTAR = 8.854e-12      %/* [F/m] Vacum Dielectric Constant */
+HBAR = 1.054e-34      %/* [Js]                            */
+HH = 6.626e-34              %/*[Js]								*/
+KB = 1.38e-23       %/* [J/K]                           */
+TEMP = 3.0e+2         %/* [K]                             */
+KT = KB*TEMP
 % 1.08872e12
-II (ELEC*ELEC*MSTAR*KB/2/PIS/HBAR/HBAR/HBAR)
-VI          0.6            %/* 電流計算時の積分範囲 */
-DELTA       1e-5
-DELTAE      1e-9
-DX          10			    %/* 分割間隔 = ML/DX   DXが大きいと分割間隔が細かい */
-OUTPUT      1             %/* ポテンシャルの出力の有無                        */
+II = ELEC*ELEC*MSTAR*KB/2/PIS/HBAR/HBAR/HBAR
+VI = 0.6            %/* 電流計算時の積分範囲 */
+DELTA = 1e-5
+DELTAE = 1e-9
+DX = 10			    %/* 分割間隔 = ML/DX   DXが大きいと分割間隔が細かい */
+OUTPUT = 1             %/* ポテンシャルの出力の有無                        */
 
-NI  1.45e16                   %/* [/m3] */
-EG_SI  1.12                     %/* [eV]   */
+NI = 1.45e16                   %/* [/m3] */
+EG_SI = 1.12                     %/* [eV]   */
 
-BASE 4.05
-pBASE (-5.17)
+BASE = 4.05
+pBASE = -5.17
 
-DIE_CAF2  6.76
-EAFF_CAF2 (4.05-1.0) %/* 2ML物性値 Delta Ec = 1.0 [eV] 適用 */
-BAR_CAF2  -(EAFF_CAF2-BASE)
-MASS_CAF2 1
+DIE_CAF2 = 6.76
+EAFF_CAF2 = 4.05-1.0 %/* 2ML物性値 Delta Ec = 1.0 [eV] 適用 */
+BAR_CAF2  = -(EAFF_CAF2-BASE)
+MASS_CAF2 = 1
 
-DIE_CDF2  8.83
-EAFF_CDF2 (4.05+0.6)
-BAR_CDF2  -(EAFF_CDF2-BASE)
-MASS_CDF2 0.4
+DIE_CDF2 = 8.83
+EAFF_CDF2 = (4.05+0.6)
+BAR_CDF2 = -(EAFF_CDF2-BASE)
+MASS_CDF2 = 0.4
 
-DIE_iSI   (11.8)
-EAFF_iSI  4.05
-BAR_iSI   -(EAFF_iSI-BASE)
-MASS_iSI  0.26
-NUMVALLY_SI 6
-MASS_SI_Z  0.98
-MASS_SI_XY 0.19
+DIE_iSI = (11.8)
+EAFF_iSI = 4.05
+BAR_iSI = -(EAFF_iSI-BASE)
+MASS_iSI = 0.26
+NUMVALLY_SI = 6
+MASS_SI_Z = 0.98
+MASS_SI_XY = 0.19
 
-DIE_AL    0
-EAFF_AL  15.83
-BAR_AL   -(EAFF_AL-BASE)
-MASS_AL  1
-EF_AL    (11.63)
+DIE_AL = 0
+EAFF_AL = 15.83
+BAR_AL = -(EAFF_AL-BASE)
+MASS_AL = 1
+EF_AL = (11.63)
 
-DIE_AU    0
-EAFF_AU  10.33
-BAR_AU   -(EAFF_AU-BASE)
-MASS_AU  1
-EF_AU    5.51
+DIE_AU = 0
+EAFF_AU = 10.33
+BAR_AU = -(EAFF_AU-BASE)
+MASS_AU = 1
+EF_AU = 5.51
 
-DIE_pSI   (11.8)
-EAFF_pSI  -(4.05+1.12)
-BAR_pSI   -(EAFF_pSI-pBASE)
-MASS_pSI  0.55
+DIE_pSI = (11.8)
+EAFF_pSI = -(4.05+1.12)
+BAR_pSI = -(EAFF_pSI-pBASE)
+MASS_pSI = 0.55
 
-DIE_pAL    0
-EAFF_pAL   0
-BAR_pAL   -(EAFF_pAL-pBASE)
-MASS_pAL  1
-EF_pAL    4.37
+DIE_pAL = 0
+EAFF_pAL = 0
+BAR_pAL = -(EAFF_pAL-pBASE)
+MASS_pAL = 1
+EF_pAL = 4.37
 
-DIE_pCAF2  6.76
-EAFF_pCAF2 -(4.05+1.12+1)
-BAR_pCAF2  -(EAFF_pCAF2-pBASE)
-MASS_pCAF2 1
+DIE_pCAF2 = 6.76
+EAFF_pCAF2 = -(4.05+1.12+1)
+BAR_pCAF2 = -(EAFF_pCAF2-pBASE)
+MASS_pCAF2 = 1
 
-DIE_SIO2   3.9
-EAFF_SIO2  (4.05-2.9)
-BAR_SIO2   -(EAFF_SIO2-BASE)
-MASS_SIO2  0.26
-NUMVALLY_SI 6
-NUMVALLY_SI_Z 2
-NUMVALLY_SI_XY 4
-LBAR	2
-WELL	(LBAR+1)
-RBAR	(LBAR+2)
-DIM		2
-LAYER	100 //利用する材料の層数の最大数．(ML数ではない)
-DIV     10
-EMAX	10
+DIE_SIO2 = 3.9
+EAFF_SIO2 = (4.05-2.9)
+BAR_SIO2 = -(EAFF_SIO2-BASE)
+MASS_SIO2 = 0.26
+NUMVALLY_SI = 6
+NUMVALLY_SI_Z = 2
+NUMVALLY_SI_XY = 4
+LBAR = 2
+WELL = (LBAR+1)
+RBAR = (LBAR+2)
+DIM	 = 2
+LAYER = 100 //利用する材料の層数の最大数．(ML数ではない)
+DIV = 10
+EMAX = 10
 
-AAA	0
+AAA = 0
 
-RTD 1
-ALL 0
+RTD = 1
+ALL = 0
 %char *name[LAYER];
 %int N[2],layer,smt[LAYER],divnum[LAYER],NX[LAYER],valley[LAYER],cond[LAYER];
 %double d[LAYER],die[LAYER],bar[LAYER],mass[LAYER],Ef[LAYER],Q[LAYER],Work[LAYER],massxy[LAYER];
