@@ -23,36 +23,38 @@ double dx,temp;
 
 int main(int argc, char *argv[])
 {
-	//if(argc < 2){
-	//	printf("aaaaaaa");
-	//	return 0;
-	//}
-	//int number = atoi(argv[1]);
-	//time_t t = time(NULL);
-	//struct tm *local = localtime(&t);
-	//char days[50];
-	//char filename_potential[50];
-	//char filename_wave[50];
-	//strftime(days, sizeof(days), "%Y_%m_%d",local);
-	//sprintf(filename_potential, "%s_%s_%d.csv", "potential", days, number);
-	//sprintf(filename_wave, "%s_%s_%d.csv", "wave", days, number);
+	if(argc < 2){
+		printf("aaaaaaa");
+		return 0;
+	}
+	int number = atoi(argv[1]);
+	time_t t = time(NULL);
+	struct tm *local = localtime(&t);
+	char days[50];
+	char filename_potential[50];
+	char filename_wave[50];
+	strftime(days, sizeof(days), "%Y_%m_%d",local);
+	sprintf(filename_potential, "%s_%s_%d.csv", "potential", days, number);
+	sprintf(filename_wave, "%s_%s_%d.csv", "wave", days, number);
 
 	
 	//int p=2; 									/* プログラムの番号				*/
 	int j, n, loop; //齋藤が変数loop(ループを回す為の変数)を追加 (2016.10.13)
 	double QW,VRTD;
-	double v[N[0]+1],vRTD[N[1]+1];				/* ポテンシャルの格納用			*/
+	double *v = calloc(N[0]+1, sizeof(double));
+	
+	double *vRTD = calloc(N[1]+1, sizeof(double));				/* ポテンシャルの格納用			*/
 	QW=0*ELEC*1e4*5e12;
 	
 	setmaterial(-100);
 	VRTD=0.2;
 	potential(v,vRTD,VRTD,QW);
-	//FILE *fp;
-	//fp = fopen(filename_potential, "w");
-	//for(j=0; j<N[0]+1; j++){
-	//	fprintf(fp, "%d\t%e\t%e\n", j, j*dx*1e9, v[j]);
-	//}
-	//fclose(fp);
+	FILE *fp;
+	fp = fopen(filename_potential, "w");
+	for(j=0; j<N[0]+1; j++){
+		fprintf(fp, "%d\t%e\t%e\n", j, j*dx*1e9, v[j]);
+	}
+	fclose(fp);
 
 	
 	//double V = v[0]+Ef[0]-(v[N[0]-1]+Ef[layer]);
@@ -64,14 +66,14 @@ int main(int argc, char *argv[])
 		wavefunction(v,En[j],0, wavestore[j]); //齋藤が引数wavestore[j]を追加 (2016.10.13)
 	}
 
-	//fp = fopen(filename_wave, "w");
-	//for(j=0; j<DIV*N[0]; j++){
-	//	fprintf(fp, "%g\t", (double)j*dx*1e9/DIV);
-	//	for(loop=0; loop<n; loop++)
-	//		fprintf(fp, "%e\t", wavestore[loop][j]);
-	//	fprintf(fp, "\n");
-	//}
-	//fclose(fp);
+	fp = fopen(filename_wave, "w");
+	for(j=0; j<DIV*N[0]; j++){
+		fprintf(fp, "%g\t", (double)j*dx*1e9/DIV);
+		for(loop=0; loop<n; loop++)
+			fprintf(fp, "%e\t", wavestore[loop][j]);
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
 	//Beep( 440, 1200 );
 	return 0;
 }
@@ -79,9 +81,9 @@ int main(int argc, char *argv[])
 int mt(int n)
 {
 	int x;
-	for(x=0;x<layer;x++)
+	for(x=0; x < layer; x++)
 	{
-		if(n<=NX[x])
+		if (n <= NX[x])
 			return x;
 	}
 	return x;
@@ -123,7 +125,7 @@ void potential(double v[], double vRTD[], double VRTD, double QW)
 
 void selfpotential(double Q, double VRTD, double vRTD[])
 {
-	int np=1;								/*npはRTD構造か、全体かを表している。np=1はRTD構造。=0は素子全体 */
+	int np=RTD;								/*npはRTD構造か、全体かを表している。np=1はRTD構造。=0は素子全体 */
 	int aa=-1;								/*計算終了の判断のために使用*/
 	double E;
 	potential0(Q,VRTD,vRTD,np);				/*近似式 初期値として使用*/
@@ -143,11 +145,11 @@ void selfpotential(double Q, double VRTD, double vRTD[])
 void potential0 (double Q, double VRTD, double v[], int np)
 {
 	int n,nrtd;
-	nrtd=nRTD(np);
+	nrtd=NX[LBAR-1];
 	double x,DL,DR;
 	DL = (VRTD-(d[WELL]/2/die[WELL]+d[RBAR]/die[RBAR])*Q) / (d[LBAR]/die[LBAR]+d[WELL]/die[WELL]+d[RBAR]/die[RBAR]);
 	DR = DL+Q;
-	for(n=0; n<N[np]+1; n++)
+	for(n=0; n<nrtd+1; n++)
 	{
 		x=n*dx;
 		switch( mt(n+nrtd) )
@@ -727,7 +729,7 @@ double calVRL(int direction, int n, double D, double v[])
 		if(direction==-1)
 		{
 			for(i=la;i>=sm;i--)
-				v[i-1]=v[NX[n]];
+				v[i-1]=v[n];
 		}
 		else
 		{
@@ -1237,7 +1239,7 @@ void setmaterial(int m)//m=-100だと、出力されない。実行はされる�
 				exit(1);
 			}
 			divnum[i] = j*DX;					/* 分割数					*/
-			N[0]        += divnum[i];			/* 総分割数					*/
+			N[ALL]        += divnum[i];			/* 総分割数					*/
 			NX[i]     = N[0];
 			d[i]      = j*ML;					/* 膜厚[m]					*/
 			name[i]   = mtconst[smt[i]].name;	/* 材料名					*/

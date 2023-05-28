@@ -99,6 +99,9 @@
 
 #define AAA	0
 
+#define RTD 1
+#define ALL 0
+
 void setmaterial(int m);
 int mt(int n);
 int nRTD(int np);
