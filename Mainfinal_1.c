@@ -1261,8 +1261,8 @@ void setmaterial(int m)//m=-100だと、出力されない。実行はされる�
 				case 9 : Ef[i]=-0.3;base=BASE;break;
 				case 10: Ef[i]=fermia(i,temp,smt[i]);base=pBASE;break;
 				case 12: Ef[i]=EF_pAL;base=pBASE;break;
-				case 14: Ef[i]=4.37;break;
-				case 16: Ef[i]=-EG_SI/2+KB*temp*log(Q[i]*1e6/NI)/ELEC;base=BASE;break;
+				case 14: Ef[i]=4.37;base=pBASE;break;
+				case 16: Ef[i]=-EG_SI/2+KB*temp*log(Q[i]*1e6/NI)/ELEC;base=pBASE;break;
 				case 19: Ef[i]=fermia(i,temp,smt[i]);base=BASE;break;
 				case 20: Ef[i]=fermia(i,temp,smt[i]);base=BASE;break;
 				case 23: Ef[i]=fermia(i,temp,smt[i]);base=pBASE;break;

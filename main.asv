@@ -8,21 +8,21 @@ filename = datestr(now, 'yyyy_mm_dd_') + num2str(count);
 j = 0;
 n = 0;
 loop = 0; %齋藤が変数loop(ループを回す為の変数)を追加 (2016.10.13)
-RTD_Designs = setmaterial();
+designs = setmaterial();
 
 const = Constant();
 dx=const.ML/const.DX;	%/* DXは分割数	MLはこのプログラムのz軸の基本単位。そのMLをさらにDX分割する。*/
 				%/* ML=1e-9にすれば、z[nm]。ML=0.31e-9ならz[ML]	*/
-N(const.ALL) = sum([RTD_Designs.divnum]);
-N(const.RTD) = RTD_Designs(const.LBAR).divnum + RTD_Designs(const.WELL).divnum + RTD_Designs(const.RBAR).divnum;	%/* RTD構造のみの層数*/
+N(designs.ALL) = sum([designs.divnum]);
+N(const.RTD) = designs(const.LBAR).divnum + design(const.WELL).divnum + design(const.RBAR).divnum;	%/* RTD構造のみの層数*/
 
-v = zeros(N(const.ALL)+1, 1);
-vRTD = zeros(N(const.RTD)+1, 1);				%/* ポテンシャルの格納用			*/
-QW=0*const.ELEC*1e4*5e12;
+v = zeros(N(ALL)+1, 1);
+vRTD = zeros(N(RTD)+1, 1);				%/* ポテンシャルの格納用			*/
+QW=0*ELEC*1e4*5e12;
 
 VRTD=0.2;
 
-potential(v,vRTD,VRTD,QW);
+% potential(v,vRTD,VRTD,QW);
 % FILE *fp;
 % fp = fopen(filename_potential, "w");
 % for(j=0; j<N[0]+1; j++){
