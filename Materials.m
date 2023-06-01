@@ -4,15 +4,14 @@ classdef Materials < handle
 		bar;		%/* バンド不連続				*/
 		mass;	%/* 有効質量					*/
 		massxy;	%/* 横方向の有効質量			*/
-		ef;		%/* フェルミエネルギー		*/
+		Ef;		%/* フェルミエネルギー		*/
 		valley;		%/* 伝導帯の谷の数			*/
 		name;		%/* 物質の名前				*/
 		cond;
-		Ef;		%フェルミエネルギーの設定。金属は物性値、半導体は教科書の式から計算、絶縁物には対応していない。
 		base;
 		Q;
 		Work;
-		divnum;
+		divnum;     %分割数
 		NX;
 		smt;
         d;
@@ -22,14 +21,13 @@ classdef Materials < handle
 
 		function obj = Materials(materialName, ML, Q, NX)
 			Ed = -0.05;
-			base = 0;		%/* 伝導帯エネルギーの基準。大抵はSiの電子親和力	*/
+			%base = 0;		%/* 伝導帯エネルギーの基準。大抵はSiの電子親和力	*/
             const = Constant();
 			if nargin == 0
 				obj.die = 0;
 				obj.bar = 0;
 				obj.mass = 0;
 				obj.massxy = 0;
-				obj.ef = 0;
 				obj.valley = 0;
 				obj.name = 0;
 				obj.cond = 0;
@@ -67,7 +65,7 @@ classdef Materials < handle
 					obj.valley = const.NUMVALLY_SI;
 					obj.cond=1;
 					obj.Q = Q;
-					obj.Ef = -const.EG_SI/2+const.KB*const.TEMP*log((obj.Q*1e6)/const.NI)/const.ELEC;
+					obj.Ef = -const.EG_SI/2+const.KB*const.TEMP*log((Q*1e6)/const.NI)/const.ELEC;
 					obj.base = const.BASE;
 					obj.Work = -obj.Ef - obj.bar + obj.base;
 					obj.divnum = ML*const.DX;
@@ -99,7 +97,7 @@ classdef Materials < handle
 				% 	obj.valley=NUMVALLY_SI;
 				% 	obj.cond=2;
 				%	obj.smt = 3;
-                    obj.d = ML*const.ML;
+                %   obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'p-Si')
 					obj.name = "p-Si";
 					obj.die = const.DIE_iSI  * const.DIEELECSTAR;
@@ -383,7 +381,7 @@ classdef Materials < handle
 				% 	obj.valley=NUMVALLY_SI;
 				% 	obj.cond=0;
 				%	obj.smt = 21;
-                    obj.d = ML*const.ML;
+                %    obj.d = ML*const.ML;
 				elseif strcmp(materialName, 'CaF2(4ML)')
 					obj.name = "CaF2(4ML)";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;

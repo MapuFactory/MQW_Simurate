@@ -12,7 +12,7 @@ global RTD_Designs;
 global layer;
 const = Constant();
 
-setmaterial(const);
+setmaterial();
 
 				%/* ML=1e-9にすれば、z[nm]。ML=0.31e-9ならz[ML]	*/
 global N;
@@ -22,11 +22,13 @@ N(const.RTD) = RTD_Designs(const.LBAR).divnum + RTD_Designs(const.WELL).divnum +
 
 v = zeros(N(const.ALL)+1, 1);
 vRTD = zeros(N(const.RTD)+1, 1);				%/* ポテンシャルの格納用			*/
-QW=0*const.ELEC*1e4*5e12;
+%QW=0*const.ELEC*1e4*5e12;
 
 VRTD=0.2;
 
-[v, vRTD] = potential(v, vRTD, VRTD, QW);
+[v, vRTD] = potential(v, vRTD, VRTD);
+zn = (0 : N(const.ALL))*const.dx*1e9;
+plot(zn, v);
 % FILE *fp;
 % fp = fopen(filename_potential, "w");
 % for(j=0; j<N[0]+1; j++){
@@ -57,53 +59,72 @@ VRTD=0.2;
 
 
 function x = mt(n)
-    global RTD_Designs layer;
+    global RTD_Designs;
+    global layer;
 	for x = 1 : layer
 		if  n <= RTD_Designs(x).NX
-            print(x)
 			return 
 		end
     end
 end
 
 function n = nRTD(np)
-	if np == 0
+    global const
+    global RTD_Designs
+	if np == const.ALL
 		n = 0;
-	elseif np == 1
+	elseif np == const.RTD
 		n = RTD_Designs(1).NX;
-	else
-		printf("想定していない値が引き数npに使われています。\n");
 	end
 end
 
 
-function [v, vRTD] = potential(v, vRTD, VRTD, QW)
+function [v, vRTD] = potential(v, vRTD, VRTD)
+    global const;
+    global N;
+    global RTD_Designs;
+    global layer;
 
-	vRTD = selfpotential(QW, VRTD, vRTD);
+	vRTD = selfpotential(VRTD, vRTD);
 	
-	for n = 0 : N(const.RTD)+1
+	for n = 1 : N(const.RTD)+1
 		v(n + RTD_Designs(1).NX) = vRTD(n);
 	end
 
-	DL = RTD_Designs(const.LBAR).die * (vRTD(1) - vRTD(0))/const.dx;
+	DL = RTD_Designs(const.LBAR).die * (vRTD(2) - vRTD(1))/const.dx;
 	DR = RTD_Designs(const.RBAR).die * (vRTD(N(const.RTD)) - vRTD(N(const.RTD) - 1))/const.dx;
 
-	for n = const.LBAR-1 : -1 : 0
+    %v2 = v;
+    %DD = DR;
+    %subplot(2,2,1);
+    %plot(v);
+	for n = const.LBAR-1 : -1 : 1
 		DL = calVRL(-1, n, DL, v);
 	end
-
-	for n = const.RBAR+1 : layer
+    %subplot(2,2,2);
+    %plot(v);
+	
+    for n = const.RBAR+1 : layer
 		DR = calVRL(1, n, DR, v);
-	end
+    end
+    %subplot(2,2,3);
+    %plot(v);
 
-	setpotential(v, 0);
+	%for n = 1 : layer
+	%	DD = calVRL(1, n, DD, v2);
+    %end
+    %subplot(2,2,4);
+    %plot(v);
+
+	setpotential(v, const.ALL);
 end
 
-function vRTD = selfpotential(Q, VRTD, vRTD)
-    const = Constant();
+function vRTD = selfpotential(VRTD, vRTD)
+    global const;
+    global N;
 	np=const.RTD;										%/*npはRTD構造か、全体かを表している。np=1はRTD構造。=0は素子全体 */
 	aa=-1;										%/*計算終了の判断のために使用*/
-	vRTD = potential0(Q, VRTD, vRTD);			%/*近似式 初期値として使用*/
+	vRTD = potential0(VRTD, vRTD);			%/*近似式 初期値として使用*/
 	vRTD = setpotential(vRTD, np);				%/*階段近似適用*/
 	A = ones(N(np), 1) * 0+0i;
 	B = ones(N(np), 1) * 1+0i;
@@ -113,29 +134,29 @@ function vRTD = selfpotential(Q, VRTD, vRTD)
 		E = confinedstate(1, vRTD, np);
 		[A, B] = cal2(E, vRTD, A, B, np);			%/*エネルギーEにおける波動関数の係数AとBを計算*/
 		k = setk(E, vRTD, k, np);					%/*波数計算*/
-		[aa, vRTD] = makewave2(Q, E, VRTD, vRTD, k, A, B, np);	%/*電荷Qを考慮したポテンシャル計算 出力は、前のポテンシャルと計算後のポテンシャルの差が1e-6以下なら-1　それ以外が1*/
+		[aa, vRTD] = makewave2(E, VRTD, vRTD, k, A, B, np);	%/*電荷Qを考慮したポテンシャル計算 出力は、前のポテンシャルと計算後のポテンシャルの差が1e-6以下なら-1　それ以外が1*/
 	end
 end
 
-function vRTD = potential0 (Q, VRTD, vRTD)
+function vRTD = potential0 (VRTD, vRTD)
     global RTD_Designs;
-    const = Constant();
-	nrtd = RTD_Designs(const.LBAR-1).NX;
-	
-	DL = (VRTD - (RTD_Designs(const.WELL).d/2/RTD_Designs(const.WELL).die + RTD_Designs(const.RBAR).d/RTD_Designs(const.RBAR).die)*Q) / (RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die+RTD_Designs(const.WELL).d/RTD_Designs(const.WELL).die + RTD_Designs(const.RBAR).d/RTD_Designs(const.RBAR).die);
-	DR = DL + Q;
+    global layer;
+    global const;
+    global N;
+	NX0 = RTD_Designs(const.LBAR-1).NX;
+	DL = VRTD / (RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die+RTD_Designs(const.WELL).d/RTD_Designs(const.WELL).die + RTD_Designs(const.RBAR).d/RTD_Designs(const.RBAR).die);
+	DR = DL;
 
-	for n = 0 : nrtd+1	
+	for n = 1 : N(const.RTD) +1	
 		x = n*const.dx;
-		switch mt(n + nrtd) 
-			case 0
-				vRTD(n) = VRTD;
+        		
+		switch mt(NX0 + n)
 			case 1
 				vRTD(n) = VRTD;
 			case 2
 				vRTD(n) = -DL*x/RTD_Designs(const.LBAR).die + VRTD;
 			case 3
-				vRTD(n) = -Q * ( pow(x-RTD_Designs(const.LBAR).d, 2) + RTD_Designs(const.WELL).d*RTD_Designs(const.WELL).d*(cos(2*pi*(x-RTD_Designs(const.LBAR).d)/RTD_Designs(const.WELL).d) - 1)/2/(pi*pi) ) / 2/RTD_Designs(const.WELL).die/RTD_Designs(const.WELL).d - DL*(x - RTD_Designs(const.LBAR).d)/RTD_Designs(const.WELL).die - DL*RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die + VRTD;
+                vRTD(n) = -DL*(x - RTD_Designs(const.LBAR).d)/RTD_Designs(const.WELL).die - DL*RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die + VRTD;
 			case 4
 				vRTD(n) = -DR*( x - RTD_Designs(const.LBAR).d - RTD_Designs(const.WELL).d - RTD_Designs(const.RBAR).d ) / RTD_Designs(const.RBAR).die;
 			case 5
@@ -149,24 +170,27 @@ function vRTD = potential0 (Q, VRTD, vRTD)
 end
 
 function v = setpotential (v, np)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
+    global N;
+    global RTD_Designs;
 	nrtd = nRTD(np);
 	vr = zeros(N(np)+1);
 	vl = zeros(N(np)+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
-	for n = 0 : N(np)+1
+	for n = 1 : N(np)+1
 		vl(n) = v(n) + RTD_Designs(mt(n+nrtd)).bar;
 		vr(n) = v(n) + RTD_Designs(mt(n+nrtd+1)).bar;
 	end
 
-	for n = 0 : N(np)
+	for n = 1 : N(np)
 		v(n) = ( vr(n) + vl(n+1) )/2;						%/* 階段近似適用	*/
 	end
 end
 
 function E = confinedstate(num, v, np)						%/* 引数numは、量子数nのこと。nは別のところで使われているのでnumにした。 */
+    global N;
 															%/*バグあり。恐らく、左右の一番端のエネルギーが準位として検出されてしまう。*/
 	emax = 5;												%/* whileの無限ループを避けるため */
-	min = min(v);												%/* 分割されたポテンシャルの最小値を求める */
-	E=min;
+	m = min(v);												%/* 分割されたポテンシャルの最小値を求める */
+	E=m;
 
 	for i = 1 : num+1
 		dE = 1e-3;											%/* 刻み幅(粗い)の設定                                              */
@@ -209,8 +233,8 @@ function E = confinedstate(num, v, np)						%/* 引数numは、量子数nのこ�
 			T=cal(E, v, np, 0);								%/* 透過率の計算                                   */
 			if S < T
 				S = T;										%/* 増減の判断　増加関数ならばwhile文続行          */
-			else
-				if abs(E-dE-v(0)) < 1e-9 || abs(E-dE-v(N(np)-1)) < 1e-9
+            else
+				if abs(E-dE-v(1)) < 1e-9 || abs(E-dE-v(N(np)-1)) < 1e-9
 															%/*cal関数の影響で、E=v[0]のところが準位に見えてしまうので*/
 					E = E + 10*dE;							%/*それを避けるために導入*/
 					i = i - 1;								%/*従って、準位がv[0]±1e-10[eV]の近辺に存在した場合、*/
@@ -229,11 +253,15 @@ function E = confinedstate(num, v, np)						%/* 引数numは、量子数nのこ�
 end
 
 function t = cal(E, v, np, f) 
+    global RTD_Designs;
+    global const;
+    global N;
+    global layer;
     MSTAR = const.MSTAR;
     ELEC = const.ELEC;
     HBAR = const.HBAR;
     dx = const.dx;
-	mass = [RTD_Designs.mass]
+    mass = [RTD_Designs.mass];
 
     nrtd = nRTD(np);
 
@@ -248,7 +276,7 @@ function t = cal(E, v, np, f)
 
     for n = 1:N(np)-1
         if ((E-v(n))*(E-v(n+1)) ~= 0)
-            m = sqrt(mass(mt(n+nrtd+2))/mass(mt(n+nrtd+1)));
+            m = sqrt( mass(mt(n+nrtd+2))/mass(mt(n+nrtd+1)));
             kk = sqrt((E-v(n))/(E-v(n+1)));
 
             pp = kk * m;               
@@ -319,6 +347,14 @@ function t = cal(E, v, np, f)
 end
 
 function [A, B] = cal2(E, v, A, B, np)
+    global RTD_Designs;
+    global const;
+    global N;
+    MSTAR = const.MSTAR;
+    ELEC = const.ELEC;
+    HBAR = const.HBAR;
+    dx = const.dx;
+    mass = [RTD_Designs.mass];
 
 	nrtd=nRTD(np);
 
@@ -329,18 +365,17 @@ function [A, B] = cal2(E, v, A, B, np)
 	for n=1:(N(np)-1)
 		FN(1,1)=A(n);
 		FN(2,1)=B(n);
-
 		if((E-v(n))*(E-v(n+1))~=0)
-			m=sqrt(RTD_Designs(n+nrtd+2).mass / RTD_Designs(n+nrtd+1).mass);
+			m=sqrt(mass(mt(n+nrtd+2)) / mass(mt(n+nrtd+1)));
 			kk=sqrt(E-v(n))/sqrt(E-v(n+1));
 
 			pp=kk*m;
 			pm=kk*(-m);
 
-			kn1=sqrt(2*RTD_Designs(n+nrtd+2).mass*(E-v(n+1))*const.MSTAR*const.ELEC);
+			kn1=sqrt(2*mass(mt(n+nrtd+2))*(E-v(n+1))*MSTAR*ELEC);
 
-			zp=exp(1i*kn1*const.dx/const.HBAR);
-			zm=exp(-1i*kn1*const.dx/const.HBAR);
+			zp=exp(1i*kn1*dx/HBAR);
+			zm=exp(-1i*kn1*dx/HBAR);
 
 			temp(1,1)=(pp+1)*zp;
 			temp(1,2)=(pm+1)*zp;
@@ -349,9 +384,9 @@ function [A, B] = cal2(E, v, A, B, np)
 
 			temp=temp*0.5;
 		elseif(E-v(n+1)==0 && E-v(n)~=0)
-			kn=sqrt(2*RTD_Designs(n+nrtd).mass*(E-v(n))*const.MSTAR*const.ELEC/(const.HBAR^2));
+			kn=sqrt(2*mass(mt(n+nrtd))*(E-v(n))*MSTAR*ELEC/(HBAR^2));
 
-			m=RTD_Designs(n+nrtd+1).mass/RTD_Designs(n+nrtd).mass;
+			m=mass(mt(n+nrtd+1))/mass(mt(n+nrtd));
 
 			zp=1i*kn*m;
 			zm=-1i*kn*m;
@@ -359,18 +394,18 @@ function [A, B] = cal2(E, v, A, B, np)
 			temp(1,1)=zp;
 			temp(1,2)=zm;
 
-			zp=1i*kn*m*const.dx;
-			zm=-1i*kn*m*const.dx;
+			zp=1i*kn*m*dx;
+			zm=-1i*kn*m*dx;
 
 			temp(2,1)=zp+1;
 			temp(2,2)=zm+1;
 		elseif(E-v(n)==0 && E-v(n+1)~=0)
-			kn1=sqrt(2*RTD_Designs(n+nrtd+1).mass*(E-v(n+1))*const.MSTAR*const.ELEC);
-			zp=exp(1i*kn1*const.dx/const.HBAR);
-			zm=exp(-1i*kn1*const.dx/const.HBAR);
+			kn1=sqrt(2*mass(mt(n+nrtd+1))*(E-v(n+1))*MSTAR*ELEC);
+			zp=exp(1i*kn1*dx/HBAR);
+			zm=exp(-1i*kn1*dx/HBAR);
 
-			m=RTD_Designs(n+nrtd+1).mass/RTD_Designs(n+nrtd).mass;
-			kn1=sqrt(const.HBAR^2/(2*RTD_Designs(n+nrtd+1).mass*(E-v(n+1))*const.MSTAR*const.ELEC));
+			m=mass(mt(n+nrtd+1))/mass(mt(n+nrtd));
+			kn1=sqrt(HBAR^2/(2*mass(mt(n+nrtd+1))*(E-v(n+1))*MSTAR*ELEC));
 			pp=1i*kn1*m;
 			pm=-1i*kn1*m;
 
@@ -381,9 +416,9 @@ function [A, B] = cal2(E, v, A, B, np)
 
 			temp=temp*0.5;
 		elseif(E-v(n)==0 && E-v(n+1)==0)
-			temp(1,1)=RTD_Designs(n+nrtd+1).mass/RTD_Designs(n+nrtd);
+			temp(1,1)=mass(mt(n+nrtd+1))/mass(mt(n+nrtd));
 			temp(1,2)=0;
-			temp(2,1)=(RTD_Designs(n+nrtd+1).mass*const.dx)/RTD_Designs(n+nrtd);
+			temp(2,1)=(mass(mt(n+nrtd+1))*dx)/mass(mt(n+nrtd));
 			temp(2,2)=1;
 		end
 
@@ -397,24 +432,29 @@ function [A, B] = cal2(E, v, A, B, np)
 end
 
 function k = setk(E, v, k, np)		%/* ポテンシャルから波数kを計算して格納*/
+    global N;
+    global const;
+    global RTD_Designs;
 	nrtd=nRTD(np);
-	for n = 0 : N(np)
+	for n = 1 : N(np)
 		k(n) = sqrt( 2*RTD_Designs(mt(n+nrtd+1)).mass*(E-v(n))*const.MSTAR*const.ELEC) / const.HBAR;
 	end
 end
 
-function [aa, v] = makewave2(Q, E, VRTD, v, k, A, B, np)
+function [aa, v] = makewave2(E, VRTD, v, k, A, B, np)
+    global N;
+    global const;
 	max=0;													%// 規格化用
 	qmax=0;
 	p = zeros(const.DIV*N(np), 1);
 	q = zeros(const.DIV*N(np), 1);								%// pがx座標、qがy座標 qは波動関数の絶対値の2乗を出力予定
-	qtemp = zeros(N(np)+1, 1)
-	vnew = zeros(N(np), 1);
+	qtemp = zeros(N(np)+1, 1);
+	vnew = zeros(N(np)+1, 1);
 	%gsl_complex tempA,tempB;
-	j=0;	%//	p[0]=-ML;
-	for n = 0 : N(np)
+	j=1;	%//	p[0]=-ML;
+	for n = 1 : N(np)
 		xn = (n+1)*const.dx;
-		for a = 0 : const.DIV
+		for a = 1 : const.DIV
 			p(j) = j*const.dx/const.DIV;
 			tempA = A(n) * exp(k(n) * ( (p(j)-xn) * 1i));	%/* tempA= A[n] × exp( ik[n](x-x[n])) */
 			tempB = B(n) * exp(k(n) * ( (xn-p(j)) * 1i));	%/* tempB= B[n] × exp(-ik[n](x-x[n])) */
@@ -424,17 +464,14 @@ function [aa, v] = makewave2(Q, E, VRTD, v, k, A, B, np)
 		end
 	end
 
-	j=0;
-	for n = 1 : N(np)
-		qtemp(n) = qtemp(n) - Q*q(const.DIV*n)/qmax;
-	end
+	j=1;
 
-	qtemp(0) = 0;
+	qtemp(1) = 0;
 	qtemp(N(np)) = 0;
-	vnew = potential0(0, VRTD, vnew);
+	vnew = potential0(VRTD, vnew);
 	vnew = calpotential(vnew, qtemp, np);
 	opv = zeros(N(np)+1, 1);
-	for n = 0 : N(np)+1
+	for n = 1 : N(np)+1
 		opv(n) = vnew(n);
 	end
 
@@ -445,12 +482,12 @@ function [aa, v] = makewave2(Q, E, VRTD, v, k, A, B, np)
 			max = abs(v(n) - vnew(n));
 		end
 	end
-	for n = 0 : N(np)
+	for n = 1 : N(np)
 		v(n) = vnew(n);
 	end
 
 	if max < 1e-6			%/* 重要　自己無撞着計算の収束判定*/
-		for n = 0 : N(np) 
+		for n = 1 : N(np) 
 			v(n) = opv(n);
 		end
 		v(N(np)) = 0;
@@ -461,6 +498,17 @@ function [aa, v] = makewave2(Q, E, VRTD, v, k, A, B, np)
 end
 
 function vnew = calpotential(vnew, q, np)
+    global N;
+    global const;
+    global RTD_Designs;
+
+    LBAR = const.LBAR;
+    WELL = const.WELL;
+    RBAR = const.RBAR;
+    dx = const.dx;
+    NX = [RTD_Designs.NX];
+    die = [RTD_Designs.die];
+    
     nrtd = nRTD(np);
     div = N(np) - 1;
 
@@ -503,11 +551,15 @@ function vnew = calpotential(vnew, q, np)
 end
 
 function D = calVRL(direction, n, D, v)
-	
+    global const;
+    global RTD_Designs;
+    global const;
+    dx = const.dx;
+
 	la = RTD_Designs(n).NX;
 	
-	if n-1 < 0
-		sm = 0;
+	if n-1 <= 0
+		sm = 1;
 	else
 		sm = RTD_Designs(n-1).NX;
 	end
@@ -676,6 +728,8 @@ function D = calVRL(direction, n, D, v)
 end
 
 function Vacc =  vacc(D, nd)
+    global const;
+    global RTD_Designs;
 	loop = 1;
 	Vacc = 0.1;
 	sub = 1;
@@ -946,25 +1000,26 @@ end
 %	}
 %}
 
-function setmaterial(const) % m=-100だと、出力されない。実行はされる。引き数mは、物性値を変更したい場合に使用。
+function setmaterial() % m=-100だと、出力されない。実行はされる。引き数mは、物性値を変更したい場合に使用。
+    global const;
+    global layer;
+    global RTD_Designs;
 	%base = 0;		%/* 伝導帯エネルギーの基準。大抵はSiの電子親和力	*/
 	%temp=TEMP;			%/* 温度						*/
 	%/* 各物質における物性値の設定。name:名前、die：誘電率、bar：バンド不連続、mass:有効質量、valley:谷の数。valley:基本1。cond:導電性。0が金属、1がn-Si、2がp-Si、3が絶縁物。*/
 	
 	%/* 物質を追加したい場合は、この行の上をコピーして貼り付け。iを変更するのとmtconstの配列に収まるように注意。*/
 
-	design_data = readtable('set.csv');
 	%if(m!=flag)
 	%	printf("層番号\t材料番号\t物質名\tML数\t層厚[nm]\t比誘電率\t有効質量\t障壁の高さ\t谷\t分割数\tNX\tEF\t仕事関数\t電荷量\n");
+	design_data = readtable('set.csv');
 	RTD_Designs = Materials.empty(0, length(design_data.materialName));
-
 	layer = length(design_data.materialName);							%層数
     
 	NX = cumsum(design_data.ML*const.DX);
 	for i = 1:layer
 		RTD_Designs(i) = Materials(design_data.materialName(i), design_data.ML(i), design_data.Q(i), NX(i));
-	end
-
+    end
 	% if(m!=flag)
 	% 	printf("%d\t%d\t%s\t%d\t%.4g\t%.3g\t%.2g\t%.4g\t%d\t%d\t%d\t%.4g\t%.4g\t%.4g\n", i, smt[i], name[i], j, j*ML*1e9, die[i]/DIEELECSTAR, mass[i], bar[i], valley[i], divnum[i], NX[i],Ef[i],Work[i],Q[i]);//出力。
 	% }

@@ -10,6 +10,7 @@ n = 0;
 loop = 0; %齋藤が変数loop(ループを回す為の変数)を追加 (2016.10.13)
 global RTD_Designs;
 global layer;
+global const;
 const = Constant();
 
 setmaterial();
@@ -20,13 +21,10 @@ N = [0, 0];
 N(const.ALL) = sum([RTD_Designs.divnum]);
 N(const.RTD) = RTD_Designs(const.LBAR).divnum + RTD_Designs(const.WELL).divnum + RTD_Designs(const.RBAR).divnum;	%/* RTD構造のみの層数*/
 
-v = zeros(N(const.ALL)+1, 1);
-vRTD = zeros(N(const.RTD)+1, 1);				%/* ポテンシャルの格納用			*/
-%QW=0*const.ELEC*1e4*5e12;
 
 VRTD=0.2;
 
-[v, vRTD] = potential(v, vRTD, VRTD);
+v = potential(v, VRTD);
 zn = (0 : N(const.ALL))*const.dx*1e9;
 plot(zn, v);
 % FILE *fp;
@@ -37,14 +35,13 @@ plot(zn, v);
 % fclose(fp);
 
 
-% //double V = v[0]+Ef[0]-(v[N[0]-1]+Ef[layer]);
-% n=60;								/* 計算したい準位の数	*/
-% double En[n];						/* 準位の格納			*/
-% double wavestore[n][DIV*N[0]];  //波動関数格納
-% getconfinedstates(n,v,0,En);
-% for(j=0;j<n;j++){
-% 	wavefunction(v,En[j],0, wavestore[j]); //齋藤が引数wavestore[j]を追加 (2016.10.13)
-% }
+n = 60;								%/* 計算したい準位の数	*/
+
+En = getconfinedstates(n, v);
+wavestore = zeros(n, const.DIV * N(const.ALL));
+for j = 0 : n
+ 	wavestore(j) = wavefunction(v, En(j)); //齋藤が引数wavestore[j]を追加 (2016.10.13)
+end
 
 % fp = fopen(filename_wave, "w");
 % for(j=0; j<DIV*N[0]; j++){
@@ -79,120 +76,155 @@ function n = nRTD(np)
 end
 
 
-function [v, vRTD] = potential(v, vRTD, VRTD)
-    global const;
-    global N;
+function v = potential(VRTD)
+
+	v = potential0(VRTD);			%/*近似式 初期値として使用*/
+	v = setpotential(v);				%/*階段近似適用*/
+	
+end
+function v = potential0 (VRTD)
     global RTD_Designs;
     global layer;
-
-	vRTD = selfpotential(VRTD, vRTD);
-	
-	for n = 1 : N(const.RTD)+1
-		v(n + RTD_Designs(1).NX) = vRTD(n);
-	end
-
-	DL = RTD_Designs(const.LBAR).die * (vRTD(2) - vRTD(1))/const.dx;
-	DR = RTD_Designs(const.RBAR).die * (vRTD(N(const.RTD)) - vRTD(N(const.RTD) - 1))/const.dx;
-
-    %v2 = v;
-    %DD = DR;
-    %subplot(2,2,1);
-    %plot(v);
-	for n = const.LBAR-1 : -1 : 1
-		DL = calVRL(-1, n, DL, v);
-	end
-    %subplot(2,2,2);
-    %plot(v);
-	
-    for n = const.RBAR+1 : layer
-		DR = calVRL(1, n, DR, v);
-    end
-    %subplot(2,2,3);
-    %plot(v);
-
-	%for n = 1 : layer
-	%	DD = calVRL(1, n, DD, v2);
-    %end
-    %subplot(2,2,4);
-    %plot(v);
-
-	setpotential(v, const.ALL);
-end
-
-function vRTD = selfpotential(VRTD, vRTD)
     global const;
     global N;
-	np=const.RTD;										%/*npはRTD構造か、全体かを表している。np=1はRTD構造。=0は素子全体 */
+
+    D = VRTD / sum([RTD_Designs.d] ./ [RTD_Designs.die]);%全体の電束密度を計算
+    % 先に全ての要素を0で初期化
+    die = zeros(1,N(const.ALL));
+    % 繰り返し処理でaの要素を更新
+
+    die(1 : RTD_Designs(1).NX) = RTD_Designs(1).die;
+    for i = 1:layer-1
+        die(RTD_Designs(i).NX : RTD_Designs(i+1).NX) = RTD_Designs(i+1).die;
+    end
+    v = VRTD - cumsum(D./die .* const.dx); %1つ前のvに対して、-D/ε_n*dxを計算することで蓄電状態にない系のポテンシャルを計算
+    %v = v(2:N(const.ALL));
+end
+
+function v = setpotential (v)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
+    global N;
+    global RTD_Designs;
+    global const;
+	vr = zeros(N(const.ALL)+1);
+	vl = zeros(N(const.ALL)+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
+	for n = 1 : N(const.ALL)
+		vl(n+1) = v(n) + RTD_Designs(mt(n)).bar;
+		vr(n) = v(n) + RTD_Designs(mt(n+1)).bar;
+	end
+
+	for n = 1 : N(const.ALL)
+		v(n) = ( vr(n) + vl(n+1) )/2;						%/* 階段近似適用	*/
+	end
+end
+
+function E = getconfinedstates(n, v)
+%/* 第n準位を出力												*/
+	int i;
+    E1=min(v);
+    E2=EMAX;
+	for i = 0 : n
+		E = calconfinedstate(v, np, E1, E2);
+		E1=E+1e-9;
+    end
+end
+
+double calconfinedstate(double v[], int np, double E1, double E2)
+{
+	/*	E1からE2のエネルギー範囲において、最も低い準位を探す	*/
+	/*	ない場合には、EMAXを返す。								*/
+	/*	変数	v	ポテンシャル								*/
+	/*			np	0なら空間全体、1ならRTD部分のみ				*/
+	double E,T,S,dE;
+	E=E1;											/* 探索範囲の下限													*/
+	while(E<E2)
+	{											
+		dE=1e-3;									/* 刻み幅(粗い)の設定                                              */
+		T=0;
+		S=cal(E,v,np,0);
+		while(E<E2)									/* 透過率の減少区間の検索                                          */
+		{											/* 以下の準位を求めるプログラムは                                  */
+			E+=dE;									/* エネルギーが上昇していくとともに、透過率が上昇していくと仮定し、*/
+			T=cal(E,v,np,0);						/* その最大値をとる箇所が準位であるとしている                      */
+			if(S>T)									/* よって、透過率が減少していく区間は不要                          */
+				S=T;
+			else
+				break;								/* 透過率の減少区間の終了 */
+		}
+		S=T=0;										/* S、Tの初期化                          */
+		while(E<E2)									/* 基底準位の探索 刻み幅：粗い           */
+		{
+			E+=dE;									/* エネルギーの設定                      */
+			T=cal(E,v,np,0);						/* 透過率の計算                          */
+			if(S<T)									/* 増減の判断　増加関数ならばwhile文続行 */
+				S=T;
+			else
+			{
+				E-=2*dE;							/* エネルギーを少し戻して、刻み幅を細かくしていく */
+				dE/=10;
+				S=0;
+				if(dE<1e-10)						/*　*/
+					break;
+			}
+		}
+		dE/=10;										/* 刻み幅(細かい)の設定                           */
+		S=0;										/* Sの初期化                                      */
+		while(E<E2)									/* 基底準位の探索 刻み幅：細かい                  */
+		{
+			E+=dE;									/* エネルギーの設定                               */
+			T=cal(E,v,np,0);						/* 透過率の計算                                   */
+			if(S<T)
+				S=T;								/* 増減の判断　増加関数ならばwhile文続行          */
+			else
+			{
+				if(fabs(E-dE-v[0])<1e-9||fabs(E-dE-v[N[np]-1])<1e-9)
+				{									/*cal関数の影響で、E=v[0]のところが準位に見えてしまうので*/
+					E+=10*dE;						/*それを避けるために導入*/
+					break;							/*検知できない可能性あり*/
+				}
+				E-=dE;
+				return E;
+			}
+		}
+	}
+	E2=EMAX;
+	return E2;
+}
+
+
+%function vRTD = selfpotential(VRTD, vRTD)
+function v = selfpotential(VRTD, v)
+    global const;
+    global N;
+	np=const.ALL;										%/*npはRTD構造か、全体かを表している。np=1はRTD構造。=0は素子全体 */
 	aa=-1;										%/*計算終了の判断のために使用*/
-	vRTD = potential0(VRTD, vRTD);			%/*近似式 初期値として使用*/
-	vRTD = setpotential(vRTD, np);				%/*階段近似適用*/
+    subplot(2,2,1);
+    plot(v);
+    subplot(2,2,2);
 	A = ones(N(np), 1) * 0+0i;
 	B = ones(N(np), 1) * 1+0i;
 	k = ones(N(np), 1);							%/*Aは前進波、Bは後進波の係数。kは波数 */
 
 	while aa == -1								% /*自己無撞着計算* 計算が収束しない可能性あり。*/
-		E = confinedstate(1, vRTD, np);
-		[A, B] = cal2(E, vRTD, A, B, np);			%/*エネルギーEにおける波動関数の係数AとBを計算*/
-		k = setk(E, vRTD, k, np);					%/*波数計算*/
-		[aa, vRTD] = makewave2(E, VRTD, vRTD, k, A, B, np);	%/*電荷Qを考慮したポテンシャル計算 出力は、前のポテンシャルと計算後のポテンシャルの差が1e-6以下なら-1　それ以外が1*/
+        "con"
+		E = confinedstate(1, v, np);
+        "cal2"
+		[A, B] = cal2(E, v, A, B, np);			%/*エネルギーEにおける波動関数の係数AとBを計算*/
+		k = setk(E, v, k, np);					%/*波数計算*/
+		[aa, v] = makewave2(E, VRTD, v, k, A, B, np);	%/*電荷Qを考慮したポテンシャル計算 出力は、前のポテンシャルと計算後のポテンシャルの差が1e-6以下なら-1　それ以外が1*/
 	end
 end
 
-function vRTD = potential0 (VRTD, vRTD)
-    global RTD_Designs;
-    global layer;
-    global const;
-    global N;
-	NX0 = RTD_Designs(const.LBAR-1).NX;
-	DL = VRTD / (RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die+RTD_Designs(const.WELL).d/RTD_Designs(const.WELL).die + RTD_Designs(const.RBAR).d/RTD_Designs(const.RBAR).die);
-	DR = DL;
-
-	for n = 1 : N(const.RTD) +1	
-		x = n*const.dx;
-        		
-		switch mt(NX0 + n)
-			case 1
-				vRTD(n) = VRTD;
-			case 2
-				vRTD(n) = -DL*x/RTD_Designs(const.LBAR).die + VRTD;
-			case 3
-                vRTD(n) = -DL*(x - RTD_Designs(const.LBAR).d)/RTD_Designs(const.WELL).die - DL*RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die + VRTD;
-			case 4
-				vRTD(n) = -DR*( x - RTD_Designs(const.LBAR).d - RTD_Designs(const.WELL).d - RTD_Designs(const.RBAR).d ) / RTD_Designs(const.RBAR).die;
-			case 5
-				vRTD(n) = 0;
-			case 6
-				vRTD(n) = 0;
-			case 7
-				vRTD(n) = 0;
-		end
-	end
-end
-
-function v = setpotential (v, np)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
-    global N;
-    global RTD_Designs;
-	nrtd = nRTD(np);
-	vr = zeros(N(np)+1);
-	vl = zeros(N(np)+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
-	for n = 1 : N(np)+1
-		vl(n) = v(n) + RTD_Designs(mt(n+nrtd)).bar;
-		vr(n) = v(n) + RTD_Designs(mt(n+nrtd+1)).bar;
-	end
-
-	for n = 1 : N(np)
-		v(n) = ( vr(n) + vl(n+1) )/2;						%/* 階段近似適用	*/
-	end
-end
 
 function E = confinedstate(num, v, np)						%/* 引数numは、量子数nのこと。nは別のところで使われているのでnumにした。 */
     global N;
 															%/*バグあり。恐らく、左右の一番端のエネルギーが準位として検出されてしまう。*/
 	emax = 5;												%/* whileの無限ループを避けるため */
 	m = min(v);												%/* 分割されたポテンシャルの最小値を求める */
-	E=m;
-
-	for i = 1 : num+1
+	E=(0:0.001:5);
+    T = arrayfun(@(e) cal(e, v, np, 0), E);
+    plot(E,T);
+    subplot(2,2,3);
+	for i = 1 : num
 		dE = 1e-3;											%/* 刻み幅(粗い)の設定                                              */
 		T = 0;
 		j = 0;
@@ -485,7 +517,7 @@ function [aa, v] = makewave2(E, VRTD, v, k, A, B, np)
 	for n = 1 : N(np)
 		v(n) = vnew(n);
 	end
-
+    max
 	if max < 1e-6			%/* 重要　自己無撞着計算の収束判定*/
 		for n = 1 : N(np) 
 			v(n) = opv(n);
@@ -553,8 +585,6 @@ end
 function D = calVRL(direction, n, D, v)
     global const;
     global RTD_Designs;
-    global const;
-    dx = const.dx;
 
 	la = RTD_Designs(n).NX;
 	
@@ -728,8 +758,6 @@ function D = calVRL(direction, n, D, v)
 end
 
 function Vacc =  vacc(D, nd)
-    global const;
-    global RTD_Designs;
 	loop = 1;
 	Vacc = 0.1;
 	sub = 1;
@@ -1013,9 +1041,8 @@ function setmaterial() % m=-100だと、出力されない。実行はされる�
 	%if(m!=flag)
 	%	printf("層番号\t材料番号\t物質名\tML数\t層厚[nm]\t比誘電率\t有効質量\t障壁の高さ\t谷\t分割数\tNX\tEF\t仕事関数\t電荷量\n");
 	design_data = readtable('set.csv');
-	RTD_Designs = Materials.empty(0, length(design_data.materialName));
 	layer = length(design_data.materialName);							%層数
-    
+	RTD_Designs = Materials.empty(0, length(design_data.materialName));
 	NX = cumsum(design_data.ML*const.DX);
 	for i = 1:layer
 		RTD_Designs(i) = Materials(design_data.materialName(i), design_data.ML(i), design_data.Q(i), NX(i));

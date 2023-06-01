@@ -1,4 +1,4 @@
-    classdef Constant
+classdef Constant
     properties
         ML
         MSTAR

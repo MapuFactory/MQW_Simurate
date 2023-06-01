@@ -24,10 +24,12 @@ v = zeros(N(const.ALL)+1, 1);
 vRTD = zeros(N(const.RTD)+1, 1);				%/* ポテンシャルの格納用			*/
 %QW=0*const.ELEC*1e4*5e12;
 
-VRTD=0.2;
+VRTD=0.05;
 
 [v, vRTD] = potential(v, vRTD, VRTD);
 zn = (0 : N(const.ALL))*const.dx*1e9;
+
+subplot(2,2,4)
 plot(zn, v);
 % FILE *fp;
 % fp = fopen(filename_potential, "w");
@@ -143,14 +145,16 @@ function vRTD = potential0 (VRTD, vRTD)
     global layer;
     global const;
     global N;
-	NX0 = RTD_Designs(const.LBAR-1).NX;
+
 	DL = VRTD / (RTD_Designs(const.LBAR).d/RTD_Designs(const.LBAR).die+RTD_Designs(const.WELL).d/RTD_Designs(const.WELL).die + RTD_Designs(const.RBAR).d/RTD_Designs(const.RBAR).die);
 	DR = DL;
-
-	for n = 1 : N(const.RTD) +1	
+	for n = 1 : RTD_Designs(const.RBAR+1).NX +1	
+		mtt(n) = mt(n);
+    end
+    
+	for n = 1 : RTD_Designs(const.RBAR+1).NX +1	
 		x = n*const.dx;
-        		
-		switch mt(NX0 + n)
+		switch mt(n)
 			case 1
 				vRTD(n) = VRTD;
 			case 2
@@ -166,7 +170,11 @@ function vRTD = potential0 (VRTD, vRTD)
 			case 7
 				vRTD(n) = 0;
 		end
-	end
+    end
+    subplot(2,2,2)
+    plot(vRTD)
+    subplot(2,2,3)
+    plot(mtt)
 end
 
 function v = setpotential (v, np)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
