@@ -1,0 +1,112 @@
+* 119;Circuit5.ckt
+
+.CIRCUITNAME "Circuit5"
+.rootnamemap 119;Circuit5
+.namemap
+C1=119;Circuit5;72
+L1=119;Circuit5;73
+C2=119;Circuit5;74
+C3=119;Circuit5;87
+C4=119;Circuit5;88
+C7=119;Circuit5;123
+L2=119;Circuit5;71
+L3=119;Circuit5;90
+L4=119;Circuit5;99
+L5=119;Circuit5;89
+C5=119;Circuit5;100
+L6=119;Circuit5;111
+C6=119;Circuit5;112
+L9=119;Circuit5;133
+C10=119;Circuit5;134
+L11=119;Circuit5;140
+C11=119;Circuit5;139
+C9=119;Circuit5;132
+C12=119;Circuit5;171
+L13=119;Circuit5;174
+L12=119;Circuit5;172
+C13=119;Circuit5;173
+C14=119;Circuit5;175
+L14=119;Circuit5;176
+L8=119;Circuit5;126
+C8=119;Circuit5;125
+L7=119;Circuit5;124
+L10=119;Circuit5;135
+L15=119;Circuit5;181
+C16=119;Circuit5;185
+C15=119;Circuit5;180
+L16=119;Circuit5;186
+.endnamemap
+.stringparam syslib = "C:\Program Files (x86)\Ansoft\DesignerSV2\syslib"
+.stringparam userlib = "C:\Program Files (x86)\Ansoft\DesignerSV2\userlib"
+.stringparam personallib = "C:\Users\kamei-lab\Documents\Ansoft\PersonalLib"
+.stringparam projectdir = "C:\Users\kamei-lab\Desktop\miyata\text-20181004T040059Z-001\text\fig\designer"
+
+*begin toplevel circuit
+.param g1=0.629100000000000
+.param g3=0.629100000000000
+.param g2=0.970200000000000
+.param g0=1
+.param g4=1
+.param Z0=50
+.param w0={sqrt(w01*w02)}
+.param w1={2*pi*2300000000.}
+.param w2={2*pi*2400000000.}
+.param w3={2*pi*3400000000.}
+.param w4={2*pi*3600000000.}
+.param A1={w4 - w3 + w2 - w1}
+.param B1={w1*w2*w3*w4/(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)}
+.param A2={(w2 - w3)*(w4 - w3)*(w2 + w4)*(w1 + w3)*(w1 - w2)*(w4 - w1)/(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)/A1/A1}
+.param B2={(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)^2*A1/(w2 - w3)/(w4 - w3)/(w2 + w4)/(w1 + w3)/(w1 - w2)/(w4 - w1)}
+.param J1=0.0100000000000000
+.param J2=0.0100000000000000
+.param J3=0.0100000000000000
+.param J4={J1*J3/J2}
+.param w01={2*pi*2000000000.}
+.param w02={2*pi*3900000000.}
+.param al1={J1*Z0/sqrt(Z0*Z0 - J1*J1)}
+.param al4={J4*Z0/sqrt(Z0*Z0 - J4*J4)}
+.param be1={J1/Z0*sqrt(Z0*Z0 - J1*J1)}
+.param be4={J4/Z0*sqrt(Z0*Z0 - J4*J4)}
+CAP:72 0 net_451 C={g1*Z0/A1*J1*J1} 
+IND:73 net_287 net_451 L={1/g1/Z0/A2/J1/J1} 
+CAP:74 0 net_287 C={g1*Z0/B2*J1*J1} 
+CAP:87 0 net_487 C={g2/Z0/A1*J2*J2/J1/J1} 
+CAP:88 0 net_304 C={g2/Z0/B2*J2*J2/J1/J1} 
+CAP:123 0 net_451 C={-be1/(w02 - w01)} 
+IND:71 0 net_451 L={1/g1/Z0/B1/J1/J1} 
+IND:90 net_304 net_487 L={Z0/g2/A2*J1*J1/J2/J2} 
+IND:99 net_359 net_486 L={1/g3/Z0/A2/J1/J1/J3/J3*J2*J2} 
+IND:89 0 net_487 L={Z0/g2/B1*J1*J1/J2/J2} 
+CAP:100 0 net_359 C={g3*Z0/B2*J1*J1*J3*J3/J2/J2} 
+IND:111 0 net_486 L={1/g3/Z0/B1/J1/J1/J3/J3*J2*J2} 
+CAP:112 0 net_486 C={g3*Z0/A1*J1*J1*J3*J3/J2/J2} 
+IND:133 0 net_487 L={-(w02 - w01)/J2/w01/w02} 
+CAP:134 net_451 net_487 C={J2/(w02 - w01)} 
+IND:140 0 net_451 L={-(w02 - w01)/J2/w01/w02} 
+CAP:139 0 net_451 C={-J2/(w02 - w01)} 
+CAP:132 0 net_487 C={-J2/(w02 - w01)} 
+CAP:171 0 net_486 C={-J3/(w02 - w01)} 
+IND:174 net_487 net_486 L={(w02 - w01)/J3/w01/w02} 
+IND:172 0 net_486 L={-(w02 - w01)/J3/w01/w02} 
+CAP:173 net_487 net_486 C={J3/(w02 - w01)} 
+CAP:175 0 net_487 C={-J3/(w02 - w01)} 
+IND:176 0 net_487 L={-(w02 - w01)/J3/w01/w02} 
+IND:126 Port1 net_451 L={(w02 - w01)/al1/w02/w01} 
+CAP:125 Port1 net_451 C={al1/(w02 - w01)} 
+IND:124 0 net_451 L={-(w02 - w01)/be1/w01/w02} 
+IND:135 net_451 net_487 L={(w02 - w01)/J2/w01/w02} 
+IND:181 0 net_486 L={-(w02 - w01)/be4/w01/w02} 
+CAP:185 net_486 Port2 C={al4/(w02 - w01)} 
+CAP:180 0 net_486 C={-be4/(w02 - w01)} 
+IND:186 net_486 Port2 L={(w02 - w01)/al4/w02/w01} 
+PORT:Port1 Port1 0 PNUM=1 rz={g0*Z0} iz=0Ohm 
+PORT:Port2 Port2 0 PNUM=2 rz={g4*Z0} iz=0Ohm 
+
+
+*end toplevel circuit
+.nwa:"NWA1"
++ F=LIN 1MHz 10GHz 1MHz
++ SWPORD = {F}
++ SolutionFile="C:\Users\kamei-lab\Documents\Ansoft\temp\Project1.results\Circuit5_NWA1_61_U5_Circuit5_296_292\Circuit5_NWA1_61_U5_Circuit5_296_292.sol"
+
+.end

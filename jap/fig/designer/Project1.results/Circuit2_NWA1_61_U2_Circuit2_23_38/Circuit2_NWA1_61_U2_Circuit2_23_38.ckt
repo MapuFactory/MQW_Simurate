@@ -1,0 +1,36 @@
+* 13;Circuit2.ckt
+
+.CIRCUITNAME "Circuit2"
+.rootnamemap 13;Circuit2
+.namemap
+L1=13;Circuit2;10
+L2=13;Circuit2;11
+C1=13;Circuit2;12
+.endnamemap
+.stringparam syslib = "C:\Program Files (x86)\Ansoft\DesignerSV2\syslib"
+.stringparam userlib = "C:\Program Files (x86)\Ansoft\DesignerSV2\userlib"
+.stringparam personallib = "C:\Users\kamei-lab\Documents\Ansoft\PersonalLib"
+.stringparam projectdir = "C:\Users\kamei-lab\Desktop\miyata\text-20181004T040059Z-001\text\fig\designer"
+
+*begin toplevel circuit
+.param g1=0.629100000000000
+.param g3=0.629100000000000
+.param g2=0.970200000000000
+.param g0=1
+.param g4=1
+.param Z0=50
+.param w0={2*pi*1000000000.}
+IND:10 Port1 net_38 L={g1*Z0/w0} 
+IND:11 net_38 Port2 L={g3*Z0/w0} 
+CAP:12 0 net_38 C={g2/Z0/w0} 
+PORT:Port2 Port2 0 PNUM=2 rz={g4*Z0} iz=0Ohm 
+PORT:Port1 Port1 0 PNUM=1 rz={g0*Z0} iz=0Ohm 
+
+
+*end toplevel circuit
+.nwa:"NWA1"
++ F=LIN 1MHz 5GHz 1MHz
++ SWPORD = {F}
++ SolutionFile="C:\Users\kamei-lab\Documents\Ansoft\temp\Project1.results\Circuit2_NWA1_61_U2_Circuit2_23_38\Circuit2_NWA1_61_U2_Circuit2_23_38.sol"
+
+.end

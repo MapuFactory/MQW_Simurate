@@ -1,0 +1,151 @@
+%\usepackage{amsmath}
+%\usepackage{ascmac}
+%\usepackage{circuitikz}
+%\usepackage{color}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{comment}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{here}
+\usepackage{jlisting}
+\usepackage{listings}
+\usepackage{lscape}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\definecolor{vgreen}{RGB}{104,180,104}
+\definecolor{vblue}{RGB}{49,49,255}
+\definecolor{vorange}{RGB}{255,143,102}
+\definecolor{backgray}{RGB}{216,216,216}
+
+\newcommand{\bH}[0]{\boldsymbol{H}}
+\newcommand{\bE}[0]{\boldsymbol{E}}
+
+\newcommand{\mysqfr}[2]{\sqrt{\frac{#1}{#2}}}
+\newcommand{\myra}[1]{\overrightarrow{#1}}
+\newcommand{\myla}[1]{\overleftarrow{#1}}
+
+\newcommand{\myfig}[4][\linewidth]{
+\begin{figure}[#4]
+		\centering
+		\includegraphics[width=#1]{#3-crop.pdf}
+		\caption{#2}
+		\label{fig:#3}
+\end{figure}}
+
+\lstset{
+  language={c},%言語の設定
+  basicstyle={\small},
+  backgroundcolor={\color[gray]{.85}},%背景色
+  basicstyle=\ttfamily,%標準書体
+  commentstyle={\color{magenta}},%コメント書体
+  stringstyle={\color{red}},%文字列リテラルの書体
+  keywordstyle={\color[rgb]{0,0,1}},
+  %keywordstyle=\bfseries,
+  frame=tblr,%フレームの設定
+  frameround=ftff,%フレーム角の形状
+  framesep=1pt,%本文からframeまでの間隔
+  xleftmargin=3zw,
+  showstringspaces=false,
+  numbers=left,%プログラムソースの行番号の位置
+  stepnumber=1,%stepnumberで設定した値おきに行番号が表示されます
+  numberstyle=\scriptsize,%行番号の文字サイズ
+  %numbersep={},%行番号と本文との間隔（デフォルトは10pt)
+  breaklines=true,%文が行の最後まで行ったとき改行するかしないかの設定(デフォルトはfalse)
+  %breakindent={},%改行時のインデント量（デフォルトは20pt)
+  tabsize=3,
+  captionpos=b
+}
+
+\lstset
+{
+    language={Verilog},
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{vblue},
+    identifierstyle=\color{black},
+    commentstyle=\color{vgreen},
+    numbers=left,
+    numberstyle=\tiny\color{black},
+    numbersep=10pt,
+    tabsize=8,
+    literate=*{:}{{\textcolor{black}{:}}}1,
+		backgroundcolor={\color[gray]{.85}},%背景色
+  breaklines=true%文が行の最後まで行ったとき改行するかしないかの設定(デフォルトはfalse)
+}
+
+\newcommand{\wcod}[1]{プログラム\ref{cod:#1}}
+
+\define@key{janbertdims}{language}{\def\janbert@l{#1}}
+\define@key{janbertdims}{file}{\def\janbert@f{#1}}
+% initialize; change here to your preferred values
+\setkeys{janbertdims}{
+	language=c,
+	file=dummy.txt,
+}
+
+\newcommand\mycode[3][]{%
+	\begingroup
+	\setkeys{janbertdims}{#1}% the current values
+	\lstinputlisting[language={\janbert@l},caption=#2,label=cod:#3]{\janbert@f}
+	\endgroup
+}
+
+
+%%　変更点を赤色にする
+\newif\ifdevmain
+\newcommand{\henko}[1]{%
+\ifdevmain%
+\textcolor{red}{#1}%
+\else%
+#1%
+\fi%
+}
+%　章，節用
+\newcommand{\hsection}[1]{%
+\ifdevmain%
+\section{\textcolor{red}{#1}}%
+\else%
+\section{#1}%
+\fi%
+}
+\newcommand{\hsubsection}[1]{%
+\ifdevmain%
+\subsection{\textcolor{red}{#1}}%
+\else%
+\subsection{#1}%
+\fi%
+}
+\newcommand{\hsubsubsection}[1]{%
+\ifdevmain%
+\subsubsection{\textcolor{red}{#1}}%
+\else%
+\subsubsection{#1}%
+\fi%
+}
+
+
+%% その他のマクロ
+% 参照系
+\newcommand{\wpage}[1]{\pageref{#1}ページ}%
+\newcommand{\weq}[1]{式(\ref{eq:#1})}%
+\newcommand{\wfig}[1]{図\ref{fig:#1}}%
+\newcommand{\wtab}[1]{表\ref{tab:#1}}%
+\newcommand{\wpro}[1]{プログラム\ref{pro:#1}}%
+\newcommand{\wsec}[1]{\textbf{\ref{sec:#1}}}%
+\newcommand{\wpeq}[1]{\wpage{eq:#1}\weq{#1}}%
+\newcommand{\wpfig}[1]{\wpage{fig:#1}\wfig{#1}}%
+\newcommand{\wptab}[1]{\wpage{tab:#1}\wtab{#1}}%
+\newcommand{\wppro}[1]{\wpage{pro:#1}\wpro{#1}}%
+\newcommand{\wpsec}[1]{\wpage{sec:#1}\wsec{#1}}%
+
+
+%よく使うコマンド楽する用
+\newcommand{\UHF}{%
+	\SI{920}{M\hertz}%
+	}
+
+\newcommand{\sih}[2][G]{%
+\SI{#2}{#1\hertz}%
+}

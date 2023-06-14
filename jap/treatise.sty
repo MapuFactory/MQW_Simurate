@@ -1,0 +1,158 @@
+%! TEX root = main.tex
+
+\usepackage[a4paper, top=30mm, bottom=20mm, left=20mm, right=20mm]{geometry}%
+\usepackage{amsmath}%
+\usepackage{graphicx}%
+\usepackage{lscape}%
+\usepackage{cite}%
+\usepackage{enumerate}%
+\usepackage{multirow}%
+\usepackage{color}%
+\usepackage{lscape}%
+\usepackage{listings}%
+\usepackage{here}%
+\usepackage{url}%
+
+\setlength{\unitlength}{1mm}
+\def\pwidth{160}
+
+\newif\ifboldmain
+\newif\ifuseNum\useNumfalse
+
+\newenvironment{treatiseTitle}{%
+\thispagestyle{empty}
+\begin{picture}(\pwidth,240)
+	\put(0,0){\makebox(\pwidth,240){}}%
+	\put(30,120){\makebox(20,5){\Large 学生番号}}%
+	\put(30,110){\makebox(20,5){\Large \hbox to 4zw{氏名}}}%
+	\put(30,100){\makebox(20,5){\Large 指導教員}}%
+	\put(30,118){\line(1,0){105}}%
+	\put(30,108){\line(1,0){105}}%
+	\put(30,98){\line(1,0){105}}%
+
+
+  \put(0,25){\makebox(\pwidth,10){\Large \textbf{東京都立産業技術高等専門学校}}}%
+  \put(0,20){\makebox(\pwidth,10){\large \textbf{ものづくり工学科 電気電子工学コース}}}%
+  \put(0,15){\makebox(\pwidth,10){\large \textbf{Tokyo Metropolitan College of Industrial Technology}}}%
+  \put(0,10){\makebox(\pwidth,10){\large \textbf{Electrical and Electronics Engineering Course}}}%
+  \put(35,210){\makebox(\pwidth,20){\textbf{\huge \hbox to 8zw{卒業論文}}}}%
+ }%
+ {%
+ \end{picture}
+ \newpage
+ \pagestyle{plain}
+ \setcounter{page}{1}
+ }
+
+\newcommand{\年度}[1]{%
+	\put(45, 207){%
+  		\put(0, 10){%
+   		\put(0, -0.3){%
+    	\makebox(0, 0)[b]{%
+     		\begin{minipage}{130mm}%
+     		\begin{center}
+      			\textbf{\huge \hbox to 7zw{#1}}%
+     		\end{center}
+     		\end{minipage}%
+    	}%
+   		}%
+  		}%
+ 	}%
+}
+
+
+\newcommand{\日本語タイトル}[2]{%
+	\put(20, 165){%
+		\put(0, 0){%
+		\put(0, 0){\line(1, 0){130}}%
+   		\put(60, 1){%
+    		\makebox(10, 90)[b]{%
+     		\begin{minipage}{130mm}%
+     		\begin{center}
+     			{#1 %
+   				\ifuseNum
+    				\shortstack{\Vnum　#2}%
+   				\else
+    				\shortstack{#2}%
+   				\fi
+  				}
+     		\end{center}
+     	\end{minipage}%
+   		}%
+   		}%
+  		}%
+ 	}%
+}
+
+\newcommand{\英語タイトル}[2]{%
+	\put(20, 145){%
+		\put(0, 0){%
+   		\put(0, 0){\line(1, 0){130}}%
+   		\put(60, 1){%
+    		\makebox(10, 90)[b]{%
+     		\begin{minipage}{135mm}%
+     		\begin{center}
+     			{#1 %
+   				\ifuseNum
+    				\shortstack{\Vnum　#2}%
+   				\else
+    				\shortstack{#2}%
+   				\fi
+  				}
+     		\end{center}
+     		\end{minipage}%
+    	}%
+   		}%
+  		}%
+ 	}%
+}
+
+
+\newcommand{\筆者一名}[2]{%
+  \put(60, 120.5){%
+    \makebox(110, 30)[b]{%
+      \begin{minipage}{108mm}%
+        \Large #1%
+      \end{minipage}%
+    }%
+  }%
+  \put(59, 110){%
+    \makebox(110, 30)[b]{%
+      \begin{minipage}{108mm}%
+        \Large #2%
+      \end{minipage}%
+    }%
+  }%
+}
+
+
+\newcommand{\筆者二名}[4]{%
+	\put(60, 120.5){%
+  	\makebox(110, 30)[b]{%
+   		\begin{minipage}{108mm}%
+    		\Large #1 \hspace{20mm} #3%
+   		\end{minipage}%
+  		}%
+  	}
+  	\put(59, 110){
+  	\makebox(110, 30)[b]{%
+   		\begin{minipage}{108mm}%
+    		\Large #2 \hspace{8mm} #4%
+   		\end{minipage}%
+  		}%
+ 	}
+}
+
+\newcommand{\指導教員一名}[2]{
+	\put(58, 100){
+  	\makebox(110, 30)[b]{%
+   		\begin{minipage}{108mm}%
+    		\Large #1 \hspace{2mm} #2%
+   		\end{minipage}%
+  		}%
+ 	}
+}
+
+\newcommand{\提出日}[1]{%
+ \put(65, 60){\makebox(25, 5){提出日: #1}}%
+}

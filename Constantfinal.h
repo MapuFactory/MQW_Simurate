@@ -89,7 +89,7 @@
 //#define MASS_CoSi2  1
 //#define EF_CoSi2    (13.0)
 
-#define LBAR	2
+#define LBAR	2			//多分，左の障壁層に合わせるから，1かな？
 #define WELL	(LBAR+1)
 #define RBAR	(LBAR+2)
 #define DIM		2
