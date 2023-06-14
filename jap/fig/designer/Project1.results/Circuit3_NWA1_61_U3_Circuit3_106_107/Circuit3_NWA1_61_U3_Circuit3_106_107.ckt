@@ -1,0 +1,62 @@
+* 14;Circuit3.ckt
+
+.CIRCUITNAME "Circuit3"
+.rootnamemap 14;Circuit3
+.namemap
+C2=14;Circuit3;17
+L6=14;Circuit3;39
+C1=14;Circuit3;12
+L2=14;Circuit3;10
+C3=14;Circuit3;23
+L5=14;Circuit3;38
+L3=14;Circuit3;20
+C4=14;Circuit3;30
+L1=14;Circuit3;29
+L4=14;Circuit3;31
+C6=14;Circuit3;35
+C5=14;Circuit3;32
+.endnamemap
+.stringparam syslib = "C:\Program Files (x86)\Ansoft\DesignerSV2\syslib"
+.stringparam userlib = "C:\Program Files (x86)\Ansoft\DesignerSV2\userlib"
+.stringparam personallib = "C:\Users\kamei-lab\Documents\Ansoft\PersonalLib"
+.stringparam projectdir = "C:\Users\kamei-lab\Desktop\miyata\text-20181004T040059Z-001\text\fig\designer"
+
+*begin toplevel circuit
+.param g1=0.629100000000000
+.param g3=0.629100000000000
+.param g2=0.970200000000000
+.param g0=1
+.param g4=1
+.param Z0=50
+.param w0={2*pi*1000000000.}
+.param w1={2*pi*3160000000.}
+.param w2={2*pi*4750000000.}
+.param w3={2*pi*6330000000.}
+.param w4={2*pi*10600000000.}
+.param A1={w4 - w3 + w2 - w1}
+.param B1={w1*w2*w3*w4/(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)}
+.param A2={(w2 - w3)*(w4 - w3)*(w2 + w4)*(w1 + w3)*(w1 - w2)*(w4 - w1)/(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)/A1/A1}
+.param B2={(w1*w2*w4 - w1*w2*w3 + w2*w3*w4 - w1*w3*w4)^2*A1/(w2 - w3)/(w4 - w3)/(w2 + w4)/(w1 + w3)/(w1 - w2)/(w4 - w1)}
+CAP:17 net_58 net_68 C={1/g1/Z0/B1} 
+IND:39 net_108 net_116 L={Z0/g2/A2} 
+CAP:12 0 net_116 C={g2/Z0/A1} 
+IND:10 Port1 net_58 L={g1*Z0/A1} 
+CAP:23 net_68 net_116 C={1/g1/Z0/A2} 
+IND:38 0 net_116 L={Z0/g2/B1} 
+IND:20 net_68 net_116 L={g1*Z0/B2} 
+CAP:30 net_82 net_68_1 C={1/g3/Z0/B1} 
+IND:29 net_116 net_82 L={g3*Z0/A1} 
+IND:31 net_68_1 Port2 L={g3*Z0/B2} 
+CAP:35 0 net_108 C={g2/Z0/B2} 
+CAP:32 net_68_1 Port2 C={1/g3/Z0/A2} 
+PORT:Port1 Port1 0 PNUM=1 rz={g0*Z0} iz=0Ohm 
+PORT:Port2 Port2 0 PNUM=2 rz={g4*Z0} iz=0Ohm 
+
+
+*end toplevel circuit
+.nwa:"NWA1"
++ F=LIN 1MHz 15GHz 1MHz
++ SWPORD = {F}
++ SolutionFile="C:\Users\kamei-lab\Documents\Ansoft\temp\Project1.results\Circuit3_NWA1_61_U3_Circuit3_106_107\Circuit3_NWA1_61_U3_Circuit3_106_107.sol"
+
+.end

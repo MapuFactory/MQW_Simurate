@@ -147,7 +147,7 @@ void potential0 (double Q, double VRTD, double v[], int np)
 	int n,nrtd;
 	nrtd=NX[LBAR-1];
 	double x,DL,DR;
-	DL = (VRTD-(d[WELL]/2/die[WELL]+d[RBAR]/die[RBAR])*Q) / (d[LBAR]/die[LBAR]+d[WELL]/die[WELL]+d[RBAR]/die[RBAR]);
+	DL = VRTD / (d[LBAR]/die[LBAR]+d[WELL]/die[WELL]+d[RBAR]/die[RBAR]);
 	DR = DL+Q;
 	for(n=0; n<nrtd+1; n++)
 	{
@@ -156,7 +156,7 @@ void potential0 (double Q, double VRTD, double v[], int np)
 		{
 		case 0: case 1:	v[n] = VRTD; break;
 		case 2: v[n] = -DL*x/die[LBAR]+VRTD; break;
-		case 3: v[n] = -Q*( pow((x-d[LBAR]),2) + d[WELL]*d[WELL]*(cos(2*PI*(x-d[LBAR])/d[WELL])-1)/2/PIS)/2/die[WELL]/d[WELL] - DL*(x-d[LBAR])/die[WELL]-DL*d[LBAR]/die[LBAR]+VRTD; break;
+		case 3: v[n] = - DL*(x-d[LBAR])/die[WELL]-DL*d[LBAR]/die[LBAR]+VRTD; break;
 		case 4: v[n] = -DR*(x-d[LBAR]-d[WELL]-d[RBAR])/die[RBAR]; break;
 		case 5: case 6: case 7: v[n] = 0; break;
 		}
