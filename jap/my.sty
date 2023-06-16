@@ -15,6 +15,7 @@
 \usepackage{siunitx}
 \usepackage{tikz}
 \usepackage{xcolor}
+\usepackage[version=4]{mhchem}
 \definecolor{vgreen}{RGB}{104,180,104}
 \definecolor{vblue}{RGB}{49,49,255}
 \definecolor{vorange}{RGB}{255,143,102}
@@ -142,10 +143,10 @@
 
 
 %よく使うコマンド楽する用
-\newcommand{\UHF}{%
-	\SI{920}{M\hertz}%
+\newcommand{\caf}{%
+	\ce{CaF2}%
 	}
 
-\newcommand{\sih}[2][G]{%
-\SI{#2}{#1\hertz}%
+\newcommand{\sil}{%
+\ce{Si}%
 }
