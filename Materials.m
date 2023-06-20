@@ -244,8 +244,8 @@ classdef Materials < handle
 					obj.NX = NX;
 					obj.smt = 12;
                     obj.d = ML*const.ML;
-				elseif strcmp(materialName, '5MLCaF2')
-					obj.name = "5MLCaF2";
+				elseif strcmp(materialName, 'CaF2(5ML)')
+					obj.name = "CaF2(5ML)";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
 					obj.bar = 1.7;
 					obj.mass = 0.7;
@@ -415,8 +415,8 @@ classdef Materials < handle
 					obj.NX = NX;
 					obj.smt = 23;
                     obj.d = ML*const.ML;
-				elseif strcmp(materialName, '3MLCaF2')
-					obj.name = "3MLCaF2";
+				elseif strcmp(materialName, 'CaF2(3ML)')
+					obj.name = "CaF2(3ML)";
 					obj.die = const.DIE_CAF2 * const.DIEELECSTAR;
 					obj.bar = 1.5;
 					obj.mass = 1.0;
