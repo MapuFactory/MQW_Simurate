@@ -20,9 +20,9 @@ global N;
 N = RTD_Designs(layer).NX;
 
 
-VRTD=1;
+V_all=0.1;%1.35;
 
-v = potential(VRTD);
+v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
 plot(zn, v);
 hold on
@@ -44,20 +44,20 @@ for j = 1 : n
 end
 
 
-function v = potential(VRTD)
+function v = potential(V_all)
 
-	v = potential0(VRTD);			%/*近似式 初期値として使用*/
+	v = potential0(V_all);			%/*近似式 初期値として使用*/
 	v = setpotential(v);				%/*階段近似適用*/
 	
 end
 
-function v = potential0 (VRTD)
+function v = potential0 (V_all)
     global RTD_Designs;
     global layer;
     global const;
     global N;
 
-    D = VRTD / sum([RTD_Designs(2:layer-1).d] ./ [RTD_Designs(2:layer-1).die]);%全体の電束密度を計算
+    D = V_all / sum([RTD_Designs(2:layer-1).d] ./ [RTD_Designs(2:layer-1).die]);%全体の電束密度を計算
     % 先に全ての要素を0で初期化
     die = zeros(1,N);
     % 繰り返し処理でaの要素を更新
@@ -66,35 +66,40 @@ function v = potential0 (VRTD)
     for i = 2:layer
         die(RTD_Designs(i-1).NX+1 : RTD_Designs(i).NX) = RTD_Designs(i).die;
     end
-    die = die(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX);
-    v(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX) = VRTD - cumsum(D./die .* const.dx); %1つ前のvに対して、-D/ε_n*dxを計算することで蓄電状態にない系のポテンシャルを計算
-    
-    A = sqrt(2*const.KB*const.TEMP*RTD_Designs(1).Q*1e6/RTD_Designs(1).die);
-    q = const.ELEC / (const.KB * const.TEMP);
-    fai = - vacc(D, RTD_Designs(1).Q);
-    E = A * sqrt(exp(-q*fai) + q*fai - 1);
-    tempV = 0;
-    for i = RTD_Designs(1).NX : -1 :1
-        v(i) = tempV + v(RTD_Designs(1).NX+1);
-        fai = fai + E*const.dx;
-        tempV= tempV + E*const.dx;
-        E = A*sqrt(exp(-q*fai) + q*fai - 1);
-    end
-    
-    A = const.ELEC*RTD_Designs(layer).Q*1e6/2/RTD_Designs(layer).die;
-    w = abs(D / const.ELEC / ( RTD_Designs(layer).Q*1e6 ));
-    wmax = sqrt(4 * RTD_Designs(layer).die * const.KB * const.TEMP * log( RTD_Designs(layer).Q*1e6/const.NI ) / (const.ELEC^2 * RTD_Designs(layer).Q * 1e6));
-    x=0;
-    if w > wmax
-        w=wmax;
-    end
-    for i = RTD_Designs(layer-1).NX+1 : N
-        if x < w
-            v(i) = A * x * (x - 2*w) + v(RTD_Designs(layer-1).NX);
-        else
-            v(i) = -A * w * w + v(RTD_Designs(layer-1).NX);
+    x = (0: N-1)*const.dx;
+    v = V_all - D*x./die;
+    if strcmp(RTD_Designs(1).name, 'n-Si.Sub.')
+        die = die(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX);
+        v(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX) = V_all - cumsum(D./die .* const.dx); %1つ前のvに対して、-D/ε_n*dxを計算することで蓄電状態にない系のポテンシャルを計算
+
+        A = sqrt(2*const.KB*const.TEMP*RTD_Designs(1).Q*1e6/RTD_Designs(1).die);
+        q = const.ELEC / (const.KB * const.TEMP);
+        fai = - vacc(D, RTD_Designs(1).Q);
+        E = A * sqrt(exp(-q*fai) + q*fai - 1);
+        tempV = 0;
+        for i = RTD_Designs(1).NX : -1 :1
+            v(i) = tempV + v(RTD_Designs(1).NX+1);
+            fai = fai + E*const.dx;
+            tempV= tempV + E*const.dx;
+            E = A*sqrt(exp(-q*fai) + q*fai - 1);
         end
-        x = x + const.dx;
+    end
+    if strcmp(RTD_Designs(layer).name, 'n-Si.Sub.')
+        A = const.ELEC*RTD_Designs(layer).Q*1e6/2/RTD_Designs(layer).die;
+        w = abs(D / const.ELEC / ( RTD_Designs(layer).Q*1e6 ));
+        wmax = sqrt(4 * RTD_Designs(layer).die * const.KB * const.TEMP * log( RTD_Designs(layer).Q*1e6/const.NI ) / (const.ELEC^2 * RTD_Designs(layer).Q * 1e6));
+        x=0;
+        if w > wmax
+            w=wmax;
+        end
+        for i = RTD_Designs(layer-1).NX+1 : N
+            if x < w
+                v(i) = A * x * (x - 2*w) + v(RTD_Designs(layer-1).NX);
+            else
+                v(i) = -A * w * w + v(RTD_Designs(layer-1).NX);
+            end
+            x = x + const.dx;
+        end
     end
 end
 function v = setpotential (v)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
@@ -154,7 +159,7 @@ function En = getconfinedstates(n, v, mass)
     global const;
     E1 = min(v);
     E2 = max(v);%const.EMAX;
-    dE = 1e-3;
+    dE = 5e-4;
     E = E1+1e-9 :dE: E2-1e-9;
     t11 = zeros(1,length(N));
     t12 = zeros(1,length(N));
@@ -163,7 +168,7 @@ function En = getconfinedstates(n, v, mass)
     t22s = zeros(1,length(E));
     T = zeros(1,length(E));
 	for i = 1 : length(E)
-		[T(i), t11, t12, t21, t22] = TransMatrix(v, E(i), const, mass);
+		[T(i), t11, t12, t21, t22, rate] = TransMatrix(v, E(i), const, mass);
         t22s(i) = t22(N);
     end    
     [p, Es] = findpeaks(log(abs(T)), E);
@@ -174,7 +179,7 @@ function En = getconfinedstates(n, v, mass)
     end
 end
 
-function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass)
+function [T, t11, t12, t21, t22, rate] = TransMatrix(v, E, const, mass)
     N = length(v);
     kn = sqrt(mass.*(E-v).*const.ELEC) / const.HBAR;
     P = zeros(2);
@@ -209,10 +214,10 @@ function wavestore = wavefunction(v, E, const, mass, RTD_Designs, N) %//齋藤�
     B = zeros(1,N);
     if v(1) <= E
         A(1) = 1;
-        B(1) = -1;
+        B(1) = -conj(t12(N))/conj(t11(N))*A(1);
     else
         A(1) = 0;
-        B(1) = 1;
+        B(1) = 0;
     end
     for n = 2:N
         A(n) = t11(n)*A(1) + t12(n)*B(1);
@@ -239,6 +244,7 @@ function wavestore = makewave(k, A, B, const, N) %//齋藤が引数wavestoreを�
 			j =j+1;
         end
     end
+    tra = trapz(pyy);
 	wavestore = pyy./max(pyy);
 end
 %void cal3(double E, double v[], gsl_complex A[], gsl_complex B[], int np)
