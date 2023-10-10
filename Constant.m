@@ -74,6 +74,7 @@
         RTD
         ALL
         dx
+        dEV
     end
     
     methods
@@ -152,6 +153,7 @@
             obj.RTD = 2;
             obj.ALL = 1;
             obj.dx=obj.ML/obj.DX;	%/* DXは分割数	MLはこのプログラムのz軸の基本単位。そのMLをさらにDX分割する。*/
+            obj.dEV = 1E-6;
         end
     end
 end

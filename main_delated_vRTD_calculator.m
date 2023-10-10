@@ -20,7 +20,7 @@ global N;
 N = RTD_Designs(layer).NX;
 
 
-V_all=0.1;%1.35;
+V_all=1.45;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -42,12 +42,13 @@ for j = 1 : n
  	wavestore(j,:) = wavefunction(v, En(j), const, mass, RTD_Designs, N); %//齋藤が引数wavestore[j]を追加 (2016.10.13)
     plot(zn, wavestore(j,:)+En(j));
 end
-
+hold off
 
 function v = potential(V_all)
 
 	v = potential0(V_all);			%/*近似式 初期値として使用*/
 	v = setpotential(v);				%/*階段近似適用*/
+    v = v-min(v);
 	
 end
 
@@ -57,17 +58,24 @@ function v = potential0 (V_all)
     global const;
     global N;
 
-    D = V_all / sum([RTD_Designs(2:layer-1).d] ./ [RTD_Designs(2:layer-1).die]);%全体の電束密度を計算
+    D = V_all / sum([RTD_Designs.d] ./ [RTD_Designs.die]);%全体の電束密度を計算
     % 先に全ての要素を0で初期化
     die = zeros(1,N);
+    d = zeros(1,N);
     % 繰り返し処理でaの要素を更新
     v = zeros(1,N);
     die(1 : RTD_Designs(1).NX) = RTD_Designs(1).die;
+    d(1 : RTD_Designs(1).NX) = RTD_Designs(1).d;
     for i = 2:layer
         die(RTD_Designs(i-1).NX+1 : RTD_Designs(i).NX) = RTD_Designs(i).die;
+        d(RTD_Designs(i-1).NX+1 : RTD_Designs(i).NX) = RTD_Designs(i).d;
     end
-    x = (0: N-1)*const.dx;
-    v = V_all - D*x./die;
+    x = (N-1 :-1: 0)*const.dx;
+    E_point = D./die*const.dx;
+    v(1) = V_all;
+    for n = 2:N
+        v(n) = v(n-1) - E_point(n);
+    end
     if strcmp(RTD_Designs(1).name, 'n-Si.Sub.')
         die = die(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX);
         v(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX) = V_all - cumsum(D./die .* const.dx); %1つ前のvに対して、-D/ε_n*dxを計算することで蓄電状態にない系のポテンシャルを計算
@@ -106,8 +114,8 @@ function v = setpotential (v)							%/* 電位分布vに伝導バンド不連続
     global N;
     global RTD_Designs;
     global layer
-	vr = zeros(N+1);
-	vl = zeros(N+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
+	vr = zeros(1, N+1);
+	vl = zeros(1, N+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
     bar = zeros(1,N);
     % 繰り返し処理でaの要素を更新
 
@@ -158,7 +166,8 @@ function En = getconfinedstates(n, v, mass)
     global N;
     global const;
     E1 = min(v);
-    E2 = max(v);%const.EMAX;
+    E2 = max(v);
+    %E2 = const.EMAX;
     dE = 5e-4;
     E = E1+1e-9 :dE: E2-1e-9;
     t11 = zeros(1,length(N));
@@ -166,12 +175,13 @@ function En = getconfinedstates(n, v, mass)
     t21 = zeros(1,length(N));
     t22 = zeros(1,length(N));
     t22s = zeros(1,length(E));
+    t11s = zeros(1,length(E));
     T = zeros(1,length(E));
 	for i = 1 : length(E)
 		[T(i), t11, t12, t21, t22] = TransMatrix(v, E(i), const, mass);
         t22s(i) = t22(N);
     end    
-    [p, Es] = findpeaks(log(abs(T)), E);
+    [p, Es] = findpeaks(1./log(abs(t22s).^2), E);
     if n < length(Es)
         En = Es(1:n);
     else
@@ -179,9 +189,10 @@ function En = getconfinedstates(n, v, mass)
     end
 end
 
+
 function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass)
     N = length(v);
-    kn = sqrt(mass.*(E-v).*const.ELEC) / const.HBAR;
+    kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
     P = zeros(2);
     ex = zeros(2);
     %A = zeros(1, N);
@@ -192,17 +203,18 @@ function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass)
     %AB = [AN;BN];
     trans = diag([1 1]);
     for n = 2:N
-        P(1,1) = 1 + (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
-        P(1,2) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
-        P(2,1) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
-        P(2,2) = 1 + (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
-        ex(1,1) = exp(1i * kn(n-1) * dx);
-        ex(2,2) = exp(-1i * kn(n-1) * dx);
-        trans = 0.5*P*ex*trans;
-        t11(n) = trans(1,1);
-        t12(n) = trans(1,2);
-        t21(n) = trans(2,1);
-        t22(n) = trans(2,2);
+
+            P(1,1) = 1 + (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
+            P(1,2) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
+            P(2,1) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
+            P(2,2) = 1 + (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
+            ex(1,1) = exp(1i * kn(n-1) * dx);
+            ex(2,2) = exp(-1i * kn(n-1) * dx);
+            trans = 0.5*P*ex*trans;
+            t11(n) = trans(1,1);
+            t12(n) = trans(1,2);
+            t21(n) = trans(2,1);
+            t22(n) = trans(2,2);
     end
     T = mass(n)*kn(1)/mass(1)/kn(n)./abs(t11(N)).^2;
 end
@@ -214,10 +226,10 @@ function wavestore = wavefunction(v, E, const, mass, RTD_Designs, N) %//齋藤�
     B = zeros(1,N);
     if v(1) <= E
         A(1) = 1;
-        B(1) = -conj(t12(N))/conj(t11(N))*A(1);
+        B(1) = -t21(N)/t22(N)*A(1);
     else
         A(1) = 0;
-        B(1) = 0;
+        B(1) = 1;
     end
     for n = 2:N
         A(n) = t11(n)*A(1) + t12(n)*B(1);

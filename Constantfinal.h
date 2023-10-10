@@ -3,9 +3,9 @@
 #define PI          3.1415926      /* PI                              */
 #define PIS         9.8696044      /* PI^2                            */
 //#define ML 1e-10
-#define ML          0.31e-9        /* [m]   [ML]â†’[m]                 */
-//#define ML          0.155e-9        /* [m]   [ML]â†’[m]                 */
-//#define ML          0.2715e-9        /* [m]   [ML]â†’[m]                 */
+#define ML          0.31e-9        /* [m]   [ML]¨[m]                 */
+//#define ML          0.155e-9        /* [m]   [ML]¨[m]                 */
+//#define ML          0.2715e-9        /* [m]   [ML]¨[m]                 */
 #define MSTAR       9.109e-31      /* [kg]                            */
 #define ELEC        1.602e-19      /* [C]   Electron charge           */
 #define DIEELECSTAR 8.854e-12      /* [F/m] Vacum Dielectric Constant */
@@ -17,11 +17,11 @@
 //#define III (ELEC*ELEC*MSTAR*KB*TEMP/2/PIS/HBAR/HBAR/HBAR)
 /* 1.08872e12*/
 #define II (ELEC*ELEC*MSTAR*KB/2/PIS/HBAR/HBAR/HBAR)
-#define VI          0.6            /* é›»æµè¨ˆç®—æ™‚ã®ç©åˆ†ç¯„å›² */
+#define VI          0.6            /* “d—¬ŒvZ‚ÌÏ•ª”ÍˆÍ */
 #define DELTA       1e-5
 #define DELTAE      1e-9
-#define DX          10				/* åˆ†å‰²é–“éš” = ML/DX   DXãŒå¤§ãã„ã¨åˆ†å‰²é–“éš”ãŒç´°ã‹ã„ */
-#define OUTPUT      1             /* ãƒãƒ†ãƒ³ã‚·ãƒ£ãƒ«ã®å‡ºåŠ›ã®æœ‰ç„¡                        */
+#define DX          10				/* •ªŠ„ŠÔŠu = ML/DX   DX‚ª‘å‚«‚¢‚Æ•ªŠ„ŠÔŠu‚ª×‚©‚¢ */
+#define OUTPUT      1             /* ƒ|ƒeƒ“ƒVƒƒƒ‹‚Ìo—Í‚Ì—L–³                        */
 
 #define NI  1.45e16                   /* [/m3] */
 #define EG_SI  1.12                     /* [eV]   */
@@ -30,7 +30,7 @@
 #define pBASE (-5.17)
 
 #define DIE_CAF2  6.76
-#define EAFF_CAF2 (4.05-1.0) /* 2MLç‰©æ€§å€¤ Delta Ec = 1.0 [eV] é©ç”¨ */
+#define EAFF_CAF2 (4.05-1.0) /* 2ML•¨«’l Delta Ec = 1.0 [eV] “K—p */
 #define BAR_CAF2  -(EAFF_CAF2-BASE)
 #define MASS_CAF2 1
 
@@ -89,18 +89,15 @@
 //#define MASS_CoSi2  1
 //#define EF_CoSi2    (13.0)
 
-#define LBAR	2			//å¤šåˆ†ï¼Œå·¦ã®éšœå£å±¤ã«åˆã‚ã›ã‚‹ã‹ã‚‰ï¼Œ1ã‹ãªï¼Ÿ
+#define LBAR	2
 #define WELL	(LBAR+1)
 #define RBAR	(LBAR+2)
 #define DIM		2
-#define LAYER	100 //åˆ©ç”¨ã™ã‚‹ææ–™ã®å±¤æ•°ã®æœ€å¤§æ•°ï¼(MLæ•°ã§ã¯ãªã„)
+#define LAYER	100 //—˜—p‚·‚éŞ—¿‚Ì‘w”‚ÌÅ‘å”D(ML”‚Å‚Í‚È‚¢)
 #define DIV     10
 #define EMAX	10
 
 #define AAA	0
-
-#define RTD 1
-#define ALL 0
 
 void setmaterial(int m);
 int mt(int n);
@@ -113,14 +110,14 @@ double cal(double E, double v[], int np, int f);
 void cal2(double E, double v[], gsl_complex A[], gsl_complex B[], int np);
 void cal3(double E, double v[], gsl_complex A[], gsl_complex B[], int np);
 double confinedstate(int num, double v[], int np);
-void makewave(double E, double v[], gsl_complex k[], gsl_complex A[], gsl_complex B[], int np, double wavestore[]); //é½‹è—¤ãŒå¼•æ•°wavestore[]ã‚’è¿½åŠ  (2016.10.13)
+void makewave(double E, double v[], gsl_complex k[], gsl_complex A[], gsl_complex B[], int np, double wavestore[]); //âV“¡‚ªˆø”wavestore[]‚ğ’Ç‰Á (2016.10.13)
 int makewave2(double Q, double E, double VRTD, double v[], gsl_complex k[], gsl_complex A[], gsl_complex B[],int np);
 double calelecnuminwell(double E, double v[], gsl_complex k[], gsl_complex A[], gsl_complex B[], int np);
 void calpotential(double vnew[], double q[], int np);
 void selfpotential(double Q,double VRTD,double vRTD[]);
 double calVRL(int direction,int n, double D, double v[]);
 double vacc(double D, double nd);
-void wavefunction(double v[], double E,int np, double wavestore[]); //é½‹è—¤ãŒå¼•æ•°jã‚’è¿½åŠ  (2016.10.13)
+void wavefunction(double v[], double E,int np, double wavestore[]); //âV“¡‚ªˆø”j‚ğ’Ç‰Á (2016.10.13)
 double func(double E, double v, int n);
 double calcurrent(double a, double b, double v[], double delta);
 double current(double v[]);
@@ -130,3 +127,6 @@ double calconfinedstate(double v[], int np, double E1, double E2);
 double getconfinedstate(int n, double v[], int np);
 void getconfinedstates(int n, double v[], int np, double En[]);
 double cal4(double E, double v[], int np);
+int max(int a, int b);
+void confinedstates(double v[], int np);
+int min(int a, int b);
