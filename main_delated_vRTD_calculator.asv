@@ -196,18 +196,12 @@ function En = eig_confinedStates(n, v, mass)
     global RTD_Designs;
     global layer;
 
-    L = RTD_Designs(layer).NX/const.DX*0.31;
-    a = L/(N+1) .* ones(1,N);
-    h = diag(v + 2./(a.^2)) + diag(-1./a(1:N-1).^2, -1) + diag(-1./a(1:N-1).^2, 1);
-    [u, E] = eig(h);
-    E = E.*const.ELEC;
+    L = RTD_Designs(layer).NX/const.DIV*const.ML;
+    k = 2*pi/L * (1:N);
+    e = const.HBAR^2.*k/2./mass;
+    h = diag(e) + repmat(v.*, N, 1);
+    [a, E] = eig(h);
 end
-function plot_eig(st, E, u)
-    global N;
-    global const;
-    plot((0:N-1) * const.dx, E(st,st) + u(:,st));
-end
-
 
 function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N_all, N_Inject)
     kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;

@@ -92,7 +92,7 @@
             obj.VI = 0.6;
             obj.DELTA = 1e-5;
             obj.DELTAE = 1e-9;
-            obj.DX = 10;    %1MLあたりの分割間隔
+            obj.DX = 100;    %1MLあたりの分割間隔
             obj.OUTPUT = 1;
             obj.NI = 1.45e16;
             obj.EG_SI = 1.12;
