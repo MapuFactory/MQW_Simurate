@@ -75,6 +75,7 @@
         ALL
         dx
         dEV
+        InjectLayer
     end
     
     methods
@@ -92,7 +93,7 @@
             obj.VI = 0.6;
             obj.DELTA = 1e-5;
             obj.DELTAE = 1e-9;
-            obj.DX = 100;    %1MLあたりの分割間隔
+            obj.DX = 30;    %1MLあたりの分割間隔
             obj.OUTPUT = 1;
             obj.NI = 1.45e16;
             obj.EG_SI = 1.12;
@@ -154,6 +155,7 @@
             obj.ALL = 1;
             obj.dx=obj.ML/obj.DX;	%/* DXは分割数	MLはこのプログラムのz軸の基本単位。そのMLをさらにDX分割する。*/
             obj.dEV = 1E-6;
+            obj.InjectLayer = 12;%注入層までの層数（CaF2の手前のSiまで）
         end
     end
 end

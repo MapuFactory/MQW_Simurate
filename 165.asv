@@ -1,7 +1,16 @@
 materialName,ML,Q
-n-Si.Sub.     ,3,1e18
+n-Si.Sub.     ,5,1e19
+i-Si     ,4,0
+CaF2     ,2,0
+i-Si     ,4,0
 CaF2     ,2,0
 i-Si     ,3,0
+CaF2     ,2,0
+i-Si     ,2,0
+CaF2     ,2,0
+i-Si     ,2,0
+CaF2     ,2,0
+i-Si     ,2,0
 CaF2     ,2,0
 i-Si     ,2,0
 CaF2     ,4,0

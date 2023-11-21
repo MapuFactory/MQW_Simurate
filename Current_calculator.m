@@ -19,43 +19,30 @@ setmaterial();
 global N;
 N = RTD_Designs(layer).NX;
 
-
-
-V_all=0;
-
-v = potential(V_all);
-zn = (1 : N)*const.dx*1e9;
-plot(zn, v);
-hold on
-
 mass = zeros(1,N);
 mass(1:RTD_Designs(1).NX) = RTD_Designs(1).mass*const.MSTAR;
 for i = 2:layer
     mass(RTD_Designs(i-1).NX+1:RTD_Designs(i).NX) = RTD_Designs(i).mass*const.MSTAR; 
 end
-n = 20;								%/* 計算したい準位の数	*/
-eig_confinedStates(n, v, mass)
-En = getconfinedstates(n, v, mass);
-n = length(En)                      %見つかった準位の数
 
-wavestore = zeros(n, N*const.DX);
-zn = (1 : N*const.DX)*const.dx*1e9/const.DX;
-for j = 1 : n
-    wavestore(j,:) = wavefunction(v, En(j), const, mass, N);
-    plot(zn, wavestore(j,:)+En(j));
+dv = 0.0025;
+v = 0:dv:2;
+for index = 1:length(v)
+    pot = potential(v(index));
+    zn = (1 : N)*const.dx*1e9;
+    
+    E1 = min(pot);
+    E2 = max(pot);
+    dE = 5e-4;
+    E = E1+1e-9 :dE: E2-1e-9;
+    i_element = zeros(1, length(E));
+    T = zeros(1, length(E));
+    for n = 1 : length(E)
+        [i_element(n), T(n)] = cal_Current(pot, E(n), const, mass, RTD_Designs, RTD_Designs(const.InjectLayer).NX, N);
+    end
+    J(index) = const.II * const.TEMP * trapz(E, i_element)/1e4;
 end
-hold off
-E1 = min(v);
-E2 = max(v);
-%E2 = const.EMAX;
-dE = 5e-4;
-E = E1+1e-9 :dE: E2-1e-9;
-i_element = zeros(1, length(E));
-T = zeros(1, length(E));
-for n = 1 : length(E)
-    [i_element(n), T(n)] = cal_Current(v, E(n), const, mass, RTD_Designs, RTD_Designs(const.InjectLayer).NX, N);
-end
-J = const.II * const.TEMP * trapz(E, i_element)/1e4;
+plot(v, J);
 
 function v = potential(V_all)
 
@@ -185,15 +172,12 @@ function En = getconfinedstates(n, v, mass)
     E = E1+1e-9 :dE: E2-1e-9;
     t22s = zeros(1,length(E));
     T = zeros(1,length(E));
-    check_A = zeros(1,length(E));
 	for i = 1 : length(E)
-		%[T(i), t11, t12, t21, t22] = TransMatrix2(v, E(i), const, mass, 1, N);
-        %t22s(i) = t22(length(t22));
-        check_A(i) = esaki_tsu_matrix(v, E(i), const, mass, N);
+		[T(i), t11, t12, t21, t22] = TransMatrix(v, E(i), const, mass, N);
+        t22s(i) = t22(N);
         %phi = waveFunction_zenkashiki(v, E(i), const, mass, N);
         %phi_end(i) = phi(N);
     end    
-    
     [p, Es] = findpeaks(1./log(abs(t22s).^2), E);
     if n < length(Es)
         En = Es(1:n);
@@ -208,9 +192,9 @@ function En = eig_confinedStates(n, v, mass)
     global RTD_Designs;
     global layer;
 
-    L = 1e-9;
+    L = RTD_Designs(layer).NX/const.DX*const.ML;
     H2 = const.HBAR^2;
-    C_se = (-H2/2./mass(1,N-2))*(1/L^2/const.ELEC);
+    C_se = (-H2/2./const.MSTAR)*(1/L^2/const.ELEC);
     dx2 = (0.31/const.DX)^2;
     SD = (diag(-2*ones(1,N-2)) + diag(ones(1,N-3), -1) + diag(ones(1,N-3), 1))/dx2;
     K = C_se.*SD;
@@ -218,12 +202,13 @@ function En = eig_confinedStates(n, v, mass)
     [u, E] = eig(h);
     E = eig(E);
     zn = (1:N).*0.31/const.DX;
-    for i = 1:2
+    for i = 1:40
         psi(:,i) = [0;u(:,i);0];
-        area = integral(psi(:,i).*psi(:,i)', );
-        psi(:,i) = psi(:,i) .* psi(:,i);
+        %area = trapz(psi(:,i).*conj(psi(:,i)));
+        %psi(:,i) = psi(:,i).*conj(psi(:,i));
         plot(zn, psi(:,i) + E(i))
-        enend
+    end
+end
 
 function plot_eig(st, E, u)
     global N;
@@ -231,49 +216,15 @@ function plot_eig(st, E, u)
     plot((0:N-1) * const.dx, E(st,st) + u(:,st));
 end
 
-function checkA = esaki_tsu_matrix(v, E, const, mass, N)
-    kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
-    dx = const.dx;
-    p = mass(2:N) .* sin(dx.*kn(1:N-1))./mass(1:N-1) ./ sin(dx.*kn(2:N));
-    alpha   = diag(ones(1,N)) + diag(-exp(1i * kn(1:N-1) .* dx), -1);
-    beta    = diag(-ones(1,N)) + diag(exp(-1i * kn(1:N-1) .* dx), -1);
-    alpha_2 = diag(ones(1,N)) + diag(-1.* p .* exp(1i * kn(1:N-1) .* dx), -1);
-    beta_2  = diag(ones(1,N)) + diag( -1 .* p .* exp(-1i * kn(1:N-1) .* dx), -1);
-    checkA = det(alpha - beta/(beta_2)*alpha_2);
-end
 
-function [T, t11, t12, t21, t22] = TransMatrix2(v, E, const, mass, N_L, N_R)
+function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N_all)
     kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
     P = zeros(2);
     ex = zeros(2);
     dx = const.dx;
 
     trans = diag([1 1]);%通常計算
-    for n = N_L+1:N_R
-            P(1,1) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(1,2) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,1) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,2) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            ex(1,1) = exp(1i * kn(n-1) * dx);
-            ex(2,2) = exp(-1i * kn(n-1) * dx);
-            trans = 0.5*P*ex*trans;
-            t11(n) = trans(1, 1);
-            t12(n) = trans(1, 2);
-            t21(n) = trans(2, 1);
-            t22(n) = trans(2, 2);
-    end
-    T = mass(n)*kn(1)/mass(1)/kn(n)./abs(trans(1,1)).^2;
-end
-
-
-function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N_L, N_R)
-    kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
-    P = zeros(2);
-    ex = zeros(2);
-    dx = const.dx;
-
-    trans = diag([1 1]);%通常計算
-    for n = N_L+1:N_R
+    for n = 2:N_all
             P(1,1) = 1 + (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
             P(1,2) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
             P(2,1) = 1 - (kn(n-1) * mass(n))/(kn(n) * mass(n-1));
@@ -290,7 +241,7 @@ function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N_L, N_R)
 end
 
 function wavestore = wavefunction(v, E, const, mass, N) %//齋藤が引数wavestoreを追加 (2016.10.13)
-	[T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, 1, N);                               %/* 波動関数の計算                  */
+	[T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N);                               %/* 波動関数の計算                  */
     A = zeros(1,N);
     B = zeros(1,N);
     if v(1) <= E
@@ -353,29 +304,18 @@ function [i_element, T] = cal_Current(v, E, const, mass, RTD_Designs, N_all, N_I
     dx = const.dx;
 
 
-	sigma = 0.2115/2;%ガウス関数の幅
-    mu = 1.19825;
-    amp = 0.1;
+	sigma = 0.1;%ガウス関数の幅
+    mu = 1.3;
+    amp = 0.2;
     gaus = amp*exp(-1/2/sigma/sigma*(E-mu)^2);
-	sigma2 = 0.05;%ガウス関数の幅
-    mu2 = 2.3;
-    amp2 = 0.08;
-    gaus2 = amp2*exp(-1/2/sigma2/sigma2*(E-mu2)^2);
-    p_phonon = gaus + E.*E./100 + gaus2 + exp(E.*3-4)/500 + 0.017;
-    T_phonon = exp(-1./p_phonon);
+    T_phonon = (gaus  + E*E/270 + exp(15*E-31.5)/400+ 0.004) / (exp((E-2.3)/0.02)+1);
+
     k0 = sqrt(2*mass(1)*(E-v(1))*const.ELEC) / const.HBAR;
     k_Inject = sqrt(2*mass(N_Inject)*(E-v(N_Inject))*const.ELEC) / const.HBAR;
 
-    t11_0 = 1/sqrt(2) .* (k0*mass(N_Inject)/k_Inject/mass(1) / T_phonon) + 1i/sqrt(2) .*(k0*mass(N_Inject)/k_Inject/mass(1) / T_phonon);
+    t11_0 = k0*mass(N_Inject)/k_Inject/mass(1) / T_phonon;
     t12_0 = t11_0 - k0/k_Inject;
 
-	%gsl_complex t11 = gsl_complex_mul_real( gsl_complex_div(k0_mn, kn_m0), 1/T_phonon);
-	%gsl_complex k0_kn = gsl_complex_div(k0, k_injection);
-	%gsl_complex t12 = gsl_complex_sub(t11, k0_kn);
-
-
-    %trans = diag([1 1]);%通常計算
-    %for n = 2:N_all
     t11 = ones(1, N_all) * t11_0;
     t12 = ones(1, N_all) * t12_0;
     t21 = ones(1, N_all) * conj(t12_0);
