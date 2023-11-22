@@ -91,9 +91,9 @@
             obj.KT = obj.KB * obj.TEMP;
             obj.II = obj.ELEC * obj.ELEC * obj.MSTAR * obj.KB / 2 / (pi*pi) / obj.HBAR / obj.HBAR / obj.HBAR;
             obj.VI = 0.6;
-            obj.DELTA = 1e-5;
+            obj.DELTA = 1e-4;
             obj.DELTAE = 1e-9;
-            obj.DX = 30;    %1MLあたりの分割間隔
+            obj.DX = 10;    %1MLあたりの分割間隔
             obj.OUTPUT = 1;
             obj.NI = 1.45e16;
             obj.EG_SI = 1.12;
