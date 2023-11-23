@@ -37,28 +37,29 @@ V_width = 300;
 V_shift = 150;
 I = zeros(1, V_width+1);
 V = zeros(1, V_width+1);
-I_elem = zeros(1, int16(const.VI/const.DELTA)+1);
+M = int16(const.VI/const.DELTA)+1;
+I_elem = zeros(1, M);
 
 
 
-for i = 0 : V_width
+parfor i = 0 : V_width
     V_input = (i+V_shift) * dv;
     potential = calc_potential(V_input, die, bar, RTD_Designs, layer, const, N);
     V(i+1)=potential(1)+RTD_Designs(1).Ef-(potential(N)+RTD_Designs(layer).Ef);
     %if V(i+1) > 5
       %  break;
     %end
-   I(i+1) =  current(I_elem, potential, mass, const, RTD_Designs, N);
+   I(i+1) =  current(I_elem, potential, mass, const, RTD_Designs, N, M);
    if rem(i, 10) == 0
        i
    end
 end
 J = const.II * const.TEMP / 1e4 .* I;
 
-function v = calc_potential(V_all, die, RTD_Designs, layer, const, N)
+function v = calc_potential(V_all, die, bar, RTD_Designs, layer, const, N)
 
 	v = potential0(V_all, die, RTD_Designs, layer, const, N);			%/*近似式 初期値として使用*/
-	v = setpotential(v, N, RTD_Designs, layer);				%/*階段近似適用*/
+	v = setpotential(v, bar, N);				%/*階段近似適用*/
     v = v-min(v);
 	
 end
@@ -106,7 +107,7 @@ function v = potential0 (V_all, die, RTD_Designs, layer, const, N)
         end
     end
 end
-function v = setpotential (v, N, RTD_Designs, layer)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
+function v = setpotential (v, bar, N)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
 	vr = zeros(1, N+1);
 	vl = zeros(1, N+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
 	for n = 1 : N
@@ -159,25 +160,26 @@ function En = eig_confinedStates(n, v, mass, N, const)
     En = E(1:n);
 end
 
-function I = current(I_elem, potential, mass, const, RTD_Designs, N)
+function I = current(I_elem, potential, mass, const, RTD_Designs, N, M)
     Emin = potential(1);
     Emax = potential(1) + const.VI;
     Es = Emin:const.DELTA:Emax;
-    for n = 1:length(Es)
-        T = TransMatrix2(potential, Es(n), const, mass, 1, N);
-        I_elem(n) = T*RTD_Designs(1).massxy * RTD_Designs(1).valley * log( 1 + exp(const.ELEC*(potential(1)+RTD_Designs(1).Ef - Es(n)) / const.KB/const.TEMP) );
-    end
+    
+    for n = 1:M
+        T = TransMatrix2(potential, Es(n), const, mass, N);
+   end
+    I_elem = T.*RTD_Designs(1).massxy * RTD_Designs(1).valley * log( 1 + exp(const.ELEC*(potential(1)+RTD_Designs(1).Ef - Es(n)) / const.KB/const.TEMP) );
     I = trapz(I_elem);
 end
 
-function T = TransMatrix2(v, E, const, mass, N_L, N_R)
+function T = TransMatrix2(v, E, const, mass,  N)
     kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
     P = zeros(2);
     ex = zeros(2);
     dx = const.dx;
 
     trans = diag([1 1]);%通常計算
-    for n = N_L+1:N_R
+    for n = 2:N
             P(1,1) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
             P(1,2) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
             P(2,1) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
