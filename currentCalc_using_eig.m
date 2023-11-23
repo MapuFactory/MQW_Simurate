@@ -1,9 +1,9 @@
 SETFILE = "set.dat";
 
-count = 0 %csv保存用のカウンタ　手動で変える
+%count = 0 %csv保存用のカウンタ　手動で変える
 
 
-filename = datestr(now, 'yyyy_mm_dd_') + num2str(count);
+%filename = datestr(now, 'yyyy_mm_dd_') + num2str(count);
 
 const = Constant();
 
@@ -31,49 +31,46 @@ end
 
 
 n = 20;								%/* 計算したい準位の数	*/
-dv = 0.08;
-
-V_width = 300;
-V_shift = 150;
+V_max = 4;
+V_width = 100;
+V_shift = 0;
+dv = V_max/V_width;
 I = zeros(1, V_width+1);
 V = zeros(1, V_width+1);
 M = int16(const.VI/const.DELTA)+1;
 I_elem = zeros(1, M);
 
+check = [strcmp(RTD_Designs(1).name, 'n-Si.Sub.'), strcmp(RTD_Designs(layer).name, 'n-Si.Sub.')];
 
-
-parfor i = 0 : V_width
+for i = 0 : V_width
     V_input = (i+V_shift) * dv;
-    potential = calc_potential(V_input, die, bar, RTD_Designs, layer, const, N);
+    potential = calc_potential(V_input, die, bar, RTD_Designs, layer, const, N, check);
     V(i+1)=potential(1)+RTD_Designs(1).Ef-(potential(N)+RTD_Designs(layer).Ef);
     %if V(i+1) > 5
       %  break;
     %end
-   I(i+1) =  current(I_elem, potential, mass, const, RTD_Designs, N, M);
-   if rem(i, 10) == 0
-       i
-   end
+   I(i+1) =  current(potential, mass, layer, const, RTD_Designs, N, M);
+    if round(i/V_width*100) > round((i-1)/V_width*100)
+        fprintf(string(fix(i/V_width*10)))
+    end
 end
-J = const.II * const.TEMP / 1e4 .* I;
+fprintf('\n')
+J = const.II * RTD_Designs(1).massxy * const.TEMP / 1e4 .* I;
 
-function v = calc_potential(V_all, die, bar, RTD_Designs, layer, const, N)
+function v = calc_potential(V_all, die, bar, RTD_Designs, layer, const, N, check)
 
-	v = potential0(V_all, die, RTD_Designs, layer, const, N);			%/*近似式 初期値として使用*/
+	v = potential0(V_all, die, RTD_Designs, layer, const, N, check);			%/*近似式 初期値として使用*/
 	v = setpotential(v, bar, N);				%/*階段近似適用*/
     v = v-min(v);
 	
 end
-function v = potential0 (V_all, die, RTD_Designs, layer, const, N)
+function v = potential0 (V_all, die, RTD_Designs, layer, const, N, check)
     D = V_all / sum([RTD_Designs.d] ./ [RTD_Designs.die]);%全体の電束密度を計算
     % 先に全ての要素を0で初期化
     % 繰り返し処理でaの要素を更新
-    v = zeros(1,N);
     E_point = D./die*const.dx;
-    v(1) = V_all;
-    for n = 2:N
-        v(n) = v(n-1) - E_point(n);
-    end
-    if strcmp(RTD_Designs(1).name, 'n-Si.Sub.')
+    v = V_all - cumsum([0, E_point(2:N)]);
+    if check(1)
         die = die(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX);
         v(RTD_Designs(1).NX+1:RTD_Designs(layer-1).NX) = V_all - cumsum(D./die .* const.dx); %1つ前のvに対して、-D/ε_n*dxを計算することで蓄電状態にない系のポテンシャルを計算
 
@@ -89,7 +86,7 @@ function v = potential0 (V_all, die, RTD_Designs, layer, const, N)
             E = A*sqrt(exp(-q*fai) + q*fai - 1);
         end
     end
-    if strcmp(RTD_Designs(layer).name, 'n-Si.Sub.')
+    if check(2)
         A = const.ELEC*RTD_Designs(layer).Q*1e6/2/RTD_Designs(layer).die;
         w = abs(D / const.ELEC / ( RTD_Designs(layer).Q*1e6 ));
         wmax = sqrt(4 * RTD_Designs(layer).die * const.KB * const.TEMP * log( RTD_Designs(layer).Q*1e6/const.NI ) / (const.ELEC^2 * RTD_Designs(layer).Q * 1e6));
@@ -108,16 +105,7 @@ function v = potential0 (V_all, die, RTD_Designs, layer, const, N)
     end
 end
 function v = setpotential (v, bar, N)							%/* 電位分布vに伝導バンド不連続を導入し、階段近似を適用する。*/
-	vr = zeros(1, N+1);
-	vl = zeros(1, N+1);									%/* ポテンシャルの左側からの極限vrと右側からの極限			*/
-	for n = 1 : N
-		vl(n+1) = v(n) + bar(n);
-		vr(n) = v(n) + bar(n);
-	end
-
-	for n = 1 : N
-		v(n) = ( vr(n) + vl(n+1) )/2;						%/* 階段近似適用	*/
-	end
+    v = v(1:N) + bar(1:N);
 end
 function Vacc =  vacc(D, nd, const, RTD_Designs)
 	loop = 1;
@@ -160,20 +148,41 @@ function En = eig_confinedStates(n, v, mass, N, const)
     En = E(1:n);
 end
 
-function I = current(I_elem, potential, mass, const, RTD_Designs, N, M)
+function I = current(potential, mass, layer, const, RTD_Designs, N, M)
+    T = zeros(1, M);
     Emin = potential(1);
     Emax = potential(1) + const.VI;
     Es = Emin:const.DELTA:Emax;
-    
-   for n = 1:M
-        T = TransMatrix2(potential, Es(n), const, mass, N);
-   end
-    I_elem = T.*RTD_Designs(1).massxy * RTD_Designs(1).valley * log( 1 + exp(const.ELEC*(potential(1)+RTD_Designs(1).Ef - Es(n)) / const.KB/const.TEMP) );
-    I = trapz(I_elem);
+    ev = reshape(Es, [], 1) - potential;
+    mev = mass.*ev;
+    kn = sqrt(2.*mev.*const.ELEC) / const.HBAR;
+    T = TransMatrix(kn, const, mass, N, M);
+    I_elem = T .*  RTD_Designs(1).valley .* log( (1 + exp( const.ELEC/(const.KB*const.TEMP) .* (potential(1) - RTD_Designs(1).Ef - Es) ))./(1 + exp( const.ELEC/(const.KB*const.TEMP) .* (potential(layer) - RTD_Designs(layer).Ef - Es) ) ) );
+    I = trapz(Es, I_elem);
 end
 
-function T = TransMatrix2(v, E, const, mass,  N)
-    kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
+function T = TransMatrix(kn, const, mass,  N, M)
+    dx = const.dx;
+    
+    P = zeros(2, 2, M, N-1);
+    ex = zeros(2, 2, M, N-1);
+    T = zeros(1, M);
+    P(1,1, :, :) = 1 + (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
+    P(1,2, :, :) = 1 - (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
+    P(2,1, :, :) = 1 - (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
+    P(2,2, :, :) = 1 + (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));    
+    ex(1,1, :, :) = exp(1i * kn(:, 1:N-1) * dx);
+    ex(2,2, :, :) = exp(-1i * kn(:, 1:N-1) * dx);
+    trans = repmat(diag([1 1]), 1, 1, M);
+    p_ex = pagemtimes( P, ex );
+    for n = 1:N-1
+        trans = 0.5* pagemtimes( p_ex(:, :, :, n), trans );
+    end
+    T = (mass(N).*kn(:, 1)./mass(1)./kn(:, N))./reshape(abs(trans(1,1, :)).^2, [], 1);
+    T = reshape(T, 1, []);
+end
+
+function T = TransMatrix2(kn, const, mass,  N)
     P = zeros(2);
     ex = zeros(2);
     dx = const.dx;
@@ -190,7 +199,6 @@ function T = TransMatrix2(v, E, const, mass,  N)
     end
     T = (mass(n)*kn(1)/mass(1)/kn(n))./(abs(trans(1,1)).^2);
 end
-
 
 function [layer, RTD_Designs] = setmaterial(const) % m=-100だと、出力されない。実行はされる。引き数mは、物性値を変更したい場合に使用。
 	%base = 0;		%/* 伝導帯エネルギーの基準。大抵はSiの電子親和力	*/

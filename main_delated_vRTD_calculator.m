@@ -21,7 +21,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=2.21906;
+V_all=1.9;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -34,8 +34,8 @@ for i = 2:layer
     mass(RTD_Designs(i-1).NX+1:RTD_Designs(i).NX) = RTD_Designs(i).mass*const.MSTAR; 
 end
 n = 20;								%/* 計算したい準位の数	*/
-eig_confinedStates(n, v, mass)
-%En = getconfinedstates(n, v, mass);
+%eig_confinedStates(n, v, mass)
+En = getconfinedstates(n, v, mass);
 n = length(En)                      %見つかった準位の数
 
 wavestore = zeros(n, N*const.DX);
@@ -45,17 +45,6 @@ for j = 1 : n
     plot(zn, wavestore(j,:)+En(j));
 end
 hold off
-E1 = min(v);
-E2 = max(v);
-%E2 = const.EMAX;
-dE = 5e-4;
-E = E1+1e-9 :dE: E2-1e-9;
-i_element = zeros(1, length(E));
-T = zeros(1, length(E));
-for n = 1 : length(E)
-    [i_element(n), T(n)] = cal_Current(v, E(n), const, mass, RTD_Designs, RTD_Designs(const.InjectLayer).NX, N);
-end
-J = const.II * const.TEMP * trapz(E, i_element)/1e4;
 
 function v = potential(V_all)
 
@@ -187,14 +176,14 @@ function En = getconfinedstates(n, v, mass)
     T = zeros(1,length(E));
     check_A = zeros(1,length(E));
 	for i = 1 : length(E)
-		%[T(i), t11, t12, t21, t22] = TransMatrix2(v, E(i), const, mass, 1, N);
-        %t22s(i) = t22(length(t22));
+		[T(i), t11, t12, t21, t22] = TransMatrix2(v, E(i), const, mass, 1, N);
+        t22s(i) = t22(N);
         %check_A(i) = esaki_tsu_matrix(v, E(i), const, mass, N);
         %phi = waveFunction_zenkashiki(v, E(i), const, mass, N);
         %phi_end(i) = phi(N);
     end    
     
-    [p, Es] = findpeaks(1./log(abs(t22s).^2), E);
+    [p, Es] = findpeaks(log(abs(T).^2), E);
     if n < length(Es)
         En = Es(1:n);
     else
@@ -270,7 +259,7 @@ function [T, t11, t12, t21, t22] = TransMatrix(v, E, const, mass, N_L, N_R)
             t21(n) = trans(2, 1);
             t22(n) = trans(2, 2);
     end
-    T = mass(n)*kn(1)/mass(1)/kn(n)./abs(trans(1,1)).^2;
+    T = abs(mass(n)*kn(1)/mass(1)/kn(n)./abs(trans(1,1)).^2).^2;
 end
 
 function wavestore = wavefunction(v, E, const, mass, N) %//齋藤が引数wavestoreを追加 (2016.10.13)

@@ -89,9 +89,9 @@
             obj.KB = 1.38e-23;
             obj.TEMP = 3.0e+2;
             obj.KT = obj.KB * obj.TEMP;
-            obj.II = obj.ELEC * obj.ELEC * obj.MSTAR * obj.KB / 2 / (pi*pi) / obj.HBAR / obj.HBAR / obj.HBAR;
+            obj.II = obj.ELEC *obj.ELEC * obj.MSTAR * obj.KB / (2  * pi*pi * obj.HBAR * obj.HBAR * obj.HBAR);
             obj.VI = 0.6;
-            obj.DELTA = 1e-4;
+            obj.DELTA = 1e-3;
             obj.DELTAE = 1e-9;
             obj.DX = 10;    %1MLあたりの分割間隔
             obj.OUTPUT = 1;
