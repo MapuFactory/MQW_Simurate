@@ -2,11 +2,8 @@ SETFILE = "set.dat";
 
 count = 0 %csv保存用のカウンタ　手動で変える
 
-
 filename = datestr(now, 'yyyy_mm_dd_') + num2str(count);
 
-j = 0;
-n = 0;
 loop = 0; %齋藤が変数loop(ループを回す為の変数)を追加 (2016.10.13)
 global RTD_Designs;
 global layer;
@@ -33,7 +30,7 @@ mass(1:RTD_Designs(1).NX) = RTD_Designs(1).mass*const.MSTAR;
 for i = 2:layer
     mass(RTD_Designs(i-1).NX+1:RTD_Designs(i).NX) = RTD_Designs(i).mass*const.MSTAR; 
 end
-n = 20;								%/* 計算したい準位の数	*/
+n = 30;								%/* 計算したい準位の数	*/
 eig_confinedStates(n, v, mass)
 hold off
 
@@ -178,29 +175,6 @@ function En = eig_confinedStates(n, v, mass)
     end
 end
 
-
-function [T, t11, t12, t21, t22] = TransMatrix2(v, E, const, mass, N_L, N_R)
-    kn = sqrt(2.*mass.*(E-v).*const.ELEC) / const.HBAR;
-    P = zeros(2);
-    ex = zeros(2);
-    dx = const.dx;
-
-    trans = diag([1 1]);%通常計算
-    for n = N_L+1:N_R
-            P(1,1) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(1,2) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,1) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,2) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            ex(1,1) = exp(1i * kn(n-1) * dx);
-            ex(2,2) = exp(-1i * kn(n-1) * dx);
-            trans = 0.5*P*ex*trans;
-            t11(n) = trans(1, 1);
-            t12(n) = trans(1, 2);
-            t21(n) = trans(2, 1);
-            t22(n) = trans(2, 2);
-    end
-    T = mass(n)*kn(1)/mass(1)/kn(n)./abs(trans(1,1)).^2;
-end
 
 function setmaterial() % m=-100だと、出力されない。実行はされる。引き数mは、物性値を変更したい場合に使用。
     global const;
