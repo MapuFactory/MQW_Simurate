@@ -18,7 +18,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=3;%4.722;%2.21906;
+V_all=4.722;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -31,7 +31,7 @@ for i = 2:layer
     mass(RTD_Designs(i-1).NX+1:RTD_Designs(i).NX) = RTD_Designs(i).mass*const.MSTAR; 
 end
 n = 50;								%/* 計算したい準位の数	*/
-eig_confinedStates(n, v, mass);
+En = eig_confinedStates(n, v, mass);
 hold off
 
 function v = potential(V_all)

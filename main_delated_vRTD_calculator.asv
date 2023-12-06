@@ -173,20 +173,18 @@ function En = getconfinedstates(n, v, mass)
     dE = 5e-4;
     E = E1+1e-9 :dE: E2-1e-9;
     t22s = zeros(1,length(E));
-    trans = zeros(2,2,N,length(E));
+    T = zeros(2,2,N,length(E));
     check_A = zeros(1,length(E));
 	for i = 1 : length(E)    
         kn = sqrt(2.*mass.*(E(i)-v).*const.ELEC) / const.HBAR;
-		trans(:,:,:,i) = TransMatrix2(kn, const, mass, N);
-        t22s(i) = trans(2,2,N,i);
-        T(i) = abs(mass(N)*kn(1)/mass(1)/kn(N)./abs(trans(1,1,N,i)).^2).^2;
+		T(:,:,:,i) = TransMatrix2(kn, const, mass, N);
+        t22s(i) = T(2,2,N,i);
         %check_A(i) = esaki_tsu_matrix(v, E(i), const, mass, N);
         %phi = waveFunction_zenkashiki(v, E(i), const, mass, N);
         %phi_end(i) = phi(N);
     end    
     
-    [p, Es, w] = findpeaks(log(sqrt(T)), E);
-    dE = const.dE_sca + w;
+    [p, Es, w] = findpeaks(log(abs(t22)), E);
     if n < length(Es)
         En = Es(1:n);
     else
