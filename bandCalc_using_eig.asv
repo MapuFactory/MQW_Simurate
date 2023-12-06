@@ -18,7 +18,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=3;%4.722;%2.21906;
+V_all=4.722;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -180,9 +180,7 @@ function En = eig_confinedStates(n, v, mass)
 %     for i = 20:22
 %         plot_wavefunc(zn, E(i), u(:,i).^2);
 %     end
-    for i = 1:30
-        plot_wavefunc(zn, E(i), u(:,i).^2);
-    end
+
 end
 
 function plot_wavefunc(zn, E, psi)
