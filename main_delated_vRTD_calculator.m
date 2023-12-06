@@ -21,7 +21,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=1;%2.21906;
+V_all=1.2;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -186,7 +186,7 @@ function En = getconfinedstates(n, v, mass)
     end    
     
     [p, Es, w] = findpeaks(log(sqrt(T)), E);
-    dE = const.dE_sca + w;
+    %dE = const.dE_sca + w;
     if n < length(Es)
         En = Es(1:n);
     else
