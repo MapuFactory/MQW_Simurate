@@ -29,35 +29,30 @@ for i = 2:layer
     bar(RTD_Designs(i-1).NX+1 : RTD_Designs(i).NX) = RTD_Designs(i).bar;
 end
 
-
 n = 20;								%/* 計算したい準位の数	*/
-V_max = 1;
-V_width = 100;
-V_min = 0.7;
-dv = (V_max-V_min)/V_width;
-I = zeros(1, V_width);
-V = zeros(1, V_width);
-V_input = zeros(1, V_width);
+V_min = 1;
+V_max = 2;
+dv = 1e-3;
+N_v = length(V_min:dv:V_max);
+I = zeros(1, N_v+1);
+V = zeros(1, N_v+1);
 M = int16(const.VI/const.DELTA)+1;
 I_elem = zeros(1, M);
 
 check = [strcmp(RTD_Designs(1).name, 'n-Si.Sub.'), strcmp(RTD_Designs(layer).name, 'n-Si.Sub.')];
 
-for i = 1 : V_width
-    V_input(i) = i * dv + V_min;
-    potential = calc_potential(V_input(i), die, bar, RTD_Designs, layer, const, N, check);
-    V(i+1)=potential(1)+RTD_Designs(1).Ef-(potential(N)+RTD_Designs(layer).Ef);
-    %if V(i+1) > 5
-      %  break;
-    %end
-   I(i+1) =  current(potential, mass, layer, const, RTD_Designs, N, M);
-    if round(i/V_width*100) > round((i-1)/V_width*100)
-        fprintf(string(fix(i/V_width*10)))
+for i = 0:N_v-1
+    V_input = V_min + i*dv;
+    pot = calc_potential(V_input, die, bar, RTD_Designs, layer, const, N, check);
+    V(i+1)=pot(1)+RTD_Designs(1).Ef-(pot(N)+RTD_Designs(layer).Ef);
+    I(i+1) =  current(pot, mass, layer, const, RTD_Designs, N, M);
+    if round(i/N_v*100) > round((i-1)/N_v*100)
+        fprintf(string(fix(i/N_v*10)))
     end
 end
 fprintf('\n')
 J = const.II * RTD_Designs(1).massxy * const.TEMP / 1e4 .* I;
-
+plot(V, J);
 function v = calc_potential(V_all, die, bar, RTD_Designs, layer, const, N, check)
 
 	v = potential0(V_all, die, RTD_Designs, layer, const, N, check);			%/*近似式 初期値として使用*/
@@ -136,38 +131,12 @@ function Vacc =  vacc(D, nd, const, RTD_Designs)
 	end
 end
 
-function En = eig_confinedStates(n, v, mass, N, const)
-    L = 1e-9;
-    H2 = const.HBAR^2;
-    C_se = (-H2/2./mass(1,N-2))*(1/L^2/const.ELEC);
-    dx2 = (0.31/const.DX)^2;
-    SD = (diag(-2*ones(1,N-2)) + diag(ones(1,N-3), -1) + diag(ones(1,N-3), 1))/dx2;
-    K = C_se.*SD;
-    h = K + diag(v(2:N-1));
-    [u, E] = eig(h);
-    E = eig(E);
-    En = E(1:n);
-end
-
-function I = current(potential, mass, layer, const, RTD_Designs, N, M)
-    T = zeros(1, M);
-    Emin = potential(1);
-    Emax = potential(1) + const.VI;
-    Es = Emin:const.DELTA:Emax;
-    ev = reshape(Es, [], 1) - potential;
-    mev = mass.*ev;
-    kn = sqrt(2.*mev.*const.ELEC) / const.HBAR;
-    T = TransMatrix(kn, const, mass, N, M);
-    I_elem = T .*  RTD_Designs(1).valley .* log( (1 + exp( const.ELEC/(const.KB*const.TEMP) .* (potential(1) - RTD_Designs(1).Ef - Es) ))./(1 + exp( const.ELEC/(const.KB*const.TEMP) .* (potential(layer) - RTD_Designs(layer).Ef - Es) ) ) );
-    I = trapz(Es, I_elem);
-end
-
 function T = TransMatrix(kn, const, mass,  N, M)
     dx = const.dx;
     
     P = zeros(2, 2, M, N-1);
     ex = zeros(2, 2, M, N-1);
-    T = zeros(1, M);
+    
     P(1,1, :, :) = 1 + (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
     P(1,2, :, :) = 1 - (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
     P(2,1, :, :) = 1 - (sin(kn(:, 1:N-1)*dx) .* mass(:, 2:N))./(sin(kn(:, 2:N)*dx) .* mass(1:N-1));
@@ -183,23 +152,34 @@ function T = TransMatrix(kn, const, mass,  N, M)
     T = reshape(T, 1, []);
 end
 
-function T = TransMatrix2(kn, const, mass,  N)
-    P = zeros(2);
-    ex = zeros(2);
-    dx = const.dx;
+function I_G = current(pot, mass, layer, const, RTD_Designs, N, M)
 
-    trans = diag([1 1]);%通常計算
-    for n = 2:N
-            P(1,1) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(1,2) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,1) = 1 - (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            P(2,2) = 1 + (sin(kn(n-1)*dx) * mass(n))/(sin(kn(n)*dx) * mass(n-1));
-            ex(1,1) = exp(1i * kn(n-1) * dx);
-            ex(2,2) = exp(-1i * kn(n-1) * dx);
-            trans = 0.5*P*ex*trans;
-    end
-    T = (mass(n)*kn(1)/mass(1)/kn(n))./(abs(trans(1,1)).^2);
+    E1 = pot(1);
+    E2 = pot(1)+const.VI;
+    E = E1 :const.DELTA: E2;
+    N_E = length(E);
+    ev = reshape(E, [], 1) - pot;
+    mev = mass.*ev;
+    kn = sqrt(2.*mev.*const.ELEC) / const.HBAR;
+    T = TransMatrix(kn, const, mass, N, M);
+    
+    [p, states, dE_rt] = findpeaks(log(sqrt(T)), E);
+    dE_rtb = const.dE_sca + dE_rt;
+    dE_rtbs = repmat(dE_rtb, N_E, 1);
+    ps = repmat(exp(2.*p), N_E, 1);
+    sigmas = dE_rtbs./2*sqrt(2*log(2));
+    Es = repmat(E', 1, length(dE_rtb));
+    Gs = ps./sigmas./sqrt(2*pi).*exp(-(Es-states).^2./(2.*(sigmas.^2)));
+    T_G = sum(Gs, 2)';
+    Ls = ps.*(0.5.*sigmas./(0.25.*sigmas.^2 + (Es-states).^2));
+    T_L = sum(Ls, 2)';
+    i_plus  = RTD_Designs(1).massxy     * RTD_Designs(1).valley     .* log(1 + exp( const.ELEC*(pot(1) + RTD_Designs(1).Ef - E)/const.KT ));
+    i_minus = RTD_Designs(layer).massxy * RTD_Designs(layer).valley .* log(1 + exp( const.ELEC*(pot(N) + RTD_Designs(layer).Ef - E)/const.KT ));
+    i_element = i_plus + i_minus;
+    I_G = trapz(E, i_element.*T_G);
+    I_G = trapz(E, i_element.*T);
 end
+
 
 function [layer, RTD_Designs] = setmaterial(const) % m=-100だと、出力されない。実行はされる。引き数mは、物性値を変更したい場合に使用。
 	%base = 0;		%/* 伝導帯エネルギーの基準。大抵はSiの電子親和力	*/

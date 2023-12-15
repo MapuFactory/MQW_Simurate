@@ -18,7 +18,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=1.2;%4.722;%2.21906;
+V_all=0.7;%4.722;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;

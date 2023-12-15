@@ -33,19 +33,18 @@ end
 n = 20;								%/* 計算したい準位の数	*/
 V_max = 1;
 V_width = 100;
-V_min = 0.7;
-dv = (V_max-V_min)/V_width;
-I = zeros(1, V_width);
-V = zeros(1, V_width);
-V_input = zeros(1, V_width);
+V_shift = 0.7;
+dv = V_max/V_width;
+I = zeros(1, V_width+1);
+V = zeros(1, V_width+1);
 M = int16(const.VI/const.DELTA)+1;
 I_elem = zeros(1, M);
 
 check = [strcmp(RTD_Designs(1).name, 'n-Si.Sub.'), strcmp(RTD_Designs(layer).name, 'n-Si.Sub.')];
 
-for i = 1 : V_width
-    V_input(i) = i * dv + V_min;
-    potential = calc_potential(V_input(i), die, bar, RTD_Designs, layer, const, N, check);
+for i = 0 : V_width
+    V_input = (i+V_shift) * dv;
+    potential = calc_potential(V_input, die, bar, RTD_Designs, layer, const, N, check);
     V(i+1)=potential(1)+RTD_Designs(1).Ef-(potential(N)+RTD_Designs(layer).Ef);
     %if V(i+1) > 5
       %  break;

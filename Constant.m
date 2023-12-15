@@ -76,6 +76,8 @@
         dx
         dEV
         InjectLayer
+        dE_sca
+        E_TOP_onI
     end
     
     methods
@@ -91,6 +93,7 @@
             obj.KT = obj.KB * obj.TEMP;
             obj.II = obj.ELEC *obj.ELEC * obj.MSTAR * obj.KB / (2  * pi*pi * obj.HBAR * obj.HBAR * obj.HBAR);
             obj.VI = 0.6;
+            obj.E_TOP_onI = 0.6; %電流計算用　どこまでエネルギーを計算するか
             obj.DELTA = 1e-3;
             obj.DELTAE = 1e-9;
             obj.DX = 10;    %1MLあたりの分割間隔
@@ -156,6 +159,7 @@
             obj.dx=obj.ML/obj.DX;	%/* DXは分割数	MLはこのプログラムのz軸の基本単位。そのMLをさらにDX分割する。*/
             obj.dEV = 1E-6;
             obj.InjectLayer = 12;%注入層までの層数（CaF2の手前のSiまで）
+            obj.dE_sca = 60E-3; % siのフォノンエネルギー 60 meV
         end
     end
 end
