@@ -18,7 +18,7 @@ N = RTD_Designs(layer).NX;
 
 
 
-V_all=0.7;%4.722;%2.21906;
+V_all=1.0;%4.722;%2.21906;
 
 v = potential(V_all);
 zn = (1 : N)*const.dx*1e9;
@@ -163,6 +163,8 @@ function En = eig_confinedStates(n, v, mass)
     dx = 0.31/const.DX;
     MD = 0.5.* ([mass(1:N) ; mass(1)] + [mass(N) ; mass(1:N)]);
     SD = (( diag(ones(1,N-1), 1) - diag(ones(1,N)) ) ./ MD(2:N+1) - ( diag(ones(1,N)) - diag(ones(1,N-1), -1) ) ./ MD(1:N)) ./dx ./dx;
+    SD(N,1) = 1/MD(1);
+    SD(1,N) = 1/MD(N+1);
     K = C_se .* SD;
     h = K + diag(v(1:N));
     [u, E] = eig(h);
